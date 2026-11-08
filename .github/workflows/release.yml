@@ -9,9 +9,11 @@
 #
 # One archive serves Windows, macOS and Linux: the plugin picks the binary that
 # matches the machine it runs on, so a single download is complete everywhere.
-# Each target is therefore built on a runner of its own, and the four binaries
-# are packed together in the second job. Cross-compiling would need a linker and
-# a WebKitGTK for each target; native runners need neither.
+# Each target is built close to natively — Windows and Linux on their own runners
+# because a Tauri window needs the platform's system web view, macOS arm64 on an
+# arm64 runner — and the four binaries are packed together in the second job.
+# Intel macOS is the one exception: its runner image left the hosted pool, so it
+# is cross-compiled from the arm64 runner against Apple's dual-architecture SDK.
 #
 # The binaries are build products, so they are not in git (see .gitignore); they
 # are attached to the release instead. The artwork *is* in git, so a checkout can
@@ -38,15 +40,23 @@ jobs:
           - os: windows-latest
             target: win32-x64
             binary: dsh-desktop-pet.exe
+            dir: target/release
           - os: ubuntu-latest
             target: linux-x64
             binary: dsh-desktop-pet
+            dir: target/release
           - os: macos-latest
             target: darwin-arm64
             binary: dsh-desktop-pet
-          - os: macos-13
+            dir: target/release
+          # Intel macOS is cross-compiled from the arm64 runner: the x86_64
+          # image for macOS 13 is gone from the hosted pool, and Apple's SDKs
+          # carry both architectures, so one runner builds both defaults.
+          - os: macos-latest
             target: darwin-x64
             binary: dsh-desktop-pet
+            dir: target/x86_64-apple-darwin/release
+            rust_target: x86_64-apple-darwin
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -112,7 +122,16 @@ jobs:
         working-directory: pet-app
         run: |
           export RUSTFLAGS="--remap-path-prefix=$HOME=~ --remap-path-prefix=$GITHUB_WORKSPACE=~"
-          npm run build
+          if [ -n "${{ matrix.rust_target }}" ]; then
+            # Cross-compiling for Intel macOS: the runner is arm64, so the
+            # target has to be installed before cargo knows how to name it.
+            rustup target add "${{ matrix.rust_target }}"
+            npm run build:icon
+            npm run build:ui
+            cargo build --release --manifest-path src-tauri/Cargo.toml --target "${{ matrix.rust_target }}"
+          else
+            npm run build
+          fi
 
       # The directory name is the contract with the plugin: it resolves
       # bin/<platform>-<arch>/dsh-desktop-pet[.exe] at launch time.
@@ -120,7 +139,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p "plugin/bin/${{ matrix.target }}"
-          cp "pet-app/src-tauri/target/release/${{ matrix.binary }}" "plugin/bin/${{ matrix.target }}/${{ matrix.binary }}"
+          cp "pet-app/src-tauri/${{ matrix.dir }}/${{ matrix.binary }}" "plugin/bin/${{ matrix.target }}/${{ matrix.binary }}"
           chmod +x "plugin/bin/${{ matrix.target }}/${{ matrix.binary }}" 2>/dev/null || true
 
       - uses: actions/upload-artifact@v4

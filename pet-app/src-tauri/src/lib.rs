@@ -384,6 +384,11 @@ mod platform {
 
 #[cfg(not(windows))]
 mod platform {
+    // The Windows half reaches these through the same import; without it the
+    // stub below names types that are not in scope, and the whole crate fails
+    // to compile on macOS and Linux.
+    use super::{FocusOutcome, FocusStatus};
+
     /// Only the Windows shell is implemented; elsewhere a click just opens DSH.
     pub fn focus_application(_process_name: &str) -> FocusOutcome {
         FocusOutcome::new(FocusStatus::Refused, "only implemented on windows")
