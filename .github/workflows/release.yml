@@ -12,8 +12,9 @@
 # Each target is built close to natively — Windows and Linux on their own runners
 # because a Tauri window needs the platform's system web view, macOS arm64 on an
 # arm64 runner — and the four binaries are packed together in the second job.
-# Intel macOS is the one exception: its runner image left the hosted pool, so it
-# is cross-compiled from the arm64 runner against Apple's dual-architecture SDK.
+# Intel macOS is the one exception: its macos-13 job never left the queue (no runner
+# was ever assigned), so it is cross-compiled from the arm64 runner against Apple's
+# dual-architecture SDK instead.
 #
 # The binaries are build products, so they are not in git (see .gitignore); they
 # are attached to the release instead. The artwork *is* in git, so a checkout can
@@ -49,9 +50,10 @@ jobs:
             target: darwin-arm64
             binary: dsh-desktop-pet
             dir: target/release
-          # Intel macOS is cross-compiled from the arm64 runner: the x86_64
-          # image for macOS 13 is gone from the hosted pool, and Apple's SDKs
-          # carry both architectures, so one runner builds both defaults.
+          # Intel macOS is cross-compiled from the arm64 runner: the macos-13 job
+          # sat in the queue with no runner assigned for over ten minutes while
+          # every other label started, and Apple's SDKs carry both architectures,
+          # so one runner can build both defaults.
           - os: macos-latest
             target: darwin-x64
             binary: dsh-desktop-pet
