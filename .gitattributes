@@ -1,0 +1,10 @@
+# Keep the repository byte-stable across platforms: text is stored and checked
+# out as LF so a Windows working copy does not turn every line into a diff, and
+# binary assets are never run through the text filters.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.exe binary
+*.tgz binary

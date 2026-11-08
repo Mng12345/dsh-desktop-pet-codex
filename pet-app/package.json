@@ -1,0 +1,18 @@
+{
+  "name": "dsh-desktop-pet-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The Tauri window half of the desktop pet.",
+  "scripts": {
+    "build:icon": "node scripts/make-icon.mjs",
+    "build:ui": "tsc -p tsconfig.json && node scripts/copy-static.mjs",
+    "build:app": "cargo build --release --manifest-path src-tauri/Cargo.toml",
+    "build": "npm run build:icon && npm run build:ui && npm run build:app",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify:frames": "node scripts/verify-frames.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

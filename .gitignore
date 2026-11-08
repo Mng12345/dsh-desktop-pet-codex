@@ -1,0 +1,39 @@
+# Build output
+plugin/node_modules/
+pet-app/dist/
+pet-app/node_modules/
+pet-app/src-tauri/target/
+
+# The compiled plugin (lib/) IS committed on purpose: package.json exports point
+# at ./lib/index.js, and the plugin market refuses to run install scripts, so a
+# source install has to ship the JavaScript it will load. Regenerate it with
+# `npm run build` inside plugin/ after editing src/.
+
+# The pet window binary. It is a per-platform build product, not source: it is
+# produced by `node tools/pack-release.mjs` and shipped inside the release
+# tarball, so it never belongs in git. The whole directory is ignored, which
+# also keeps the timestamped `*.prev-*` backups of earlier builds out of the
+# history.
+plugin/bin/
+
+# Release tarballs produced by `node tools/pack-release.mjs`
+*.tgz
+
+# Generated icon (reproduce with `npm run build:icon`)
+pet-app/src-tauri/icons/
+
+# Development scratch: reference material, probes, and the full-resolution
+# masters the shipped frames were derived from. The shipped frames themselves
+# are committed, so a clone builds a window that draws her without regenerating
+# anything.
+.ref/
+
+# Local verification dumps: session snapshots, page screenshots and ACL reports.
+# They carry session ids, local paths and screen content, so they are never part
+# of the repository.
+temps/
+.tmp/
+.learnings/
+
+# Local run state
+*.log

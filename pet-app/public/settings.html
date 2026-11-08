@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>桌宠设置</title>
+<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <main>
+    <h1>桌宠设置</h1>
+    <p id="status" data-state="connecting">正在连接 DSH…</p>
+
+    <section>
+      <h2>外观</h2>
+
+      <label class="row" for="scale">
+        <span class="label">桌宠大小</span>
+        <output class="value" id="scale-value">1.00×</output>
+        <input type="range" id="scale" min="0.6" max="2" step="0.05" value="1">
+      </label>
+
+      <label class="row" for="fontScale">
+        <span class="label">字体大小</span>
+        <output class="value" id="fontScale-value">1.00×</output>
+        <input type="range" id="fontScale" min="0.8" max="1.6" step="0.05" value="1">
+      </label>
+
+      <label class="row" for="opacity">
+        <span class="label">面板不透明度</span>
+        <output class="value" id="opacity-value">0.94</output>
+        <input type="range" id="opacity" min="0.3" max="1" step="0.02" value="0.94">
+      </label>
+      <p class="note">文字始终清晰；鼠标悬停时面板会变实。</p>
+    </section>
+
+    <section>
+      <h2>显示</h2>
+      <label class="row switch" for="visible">
+        <span class="label">显示桌宠</span>
+        <input type="checkbox" id="visible">
+        <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+      </label>
+      <p class="note">关掉只是隐藏窗口，会话数据仍在采集，随时可以打开。</p>
+
+      <label class="row switch" for="showSessionList">
+        <span class="label">显示会话列表</span>
+        <input type="checkbox" id="showSessionList">
+        <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+      </label>
+
+      <label class="row switch" for="alwaysOnTop">
+        <span class="label">窗口置顶</span>
+        <input type="checkbox" id="alwaysOnTop">
+        <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+      </label>
+    </section>
+
+    <footer>
+      <button id="reset" type="button">恢复默认</button>
+      <button id="close" type="button" class="primary">关闭</button>
+    </footer>
+  </main>
+  <script type="module" src="settings.js"></script>
+</body>
+</html>

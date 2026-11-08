@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Desktop Pet</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-phase="idle" data-connected="false">
+  <!-- The character window holds the character and nothing else: no card, no
+       border, no text. It is transparent, so she stands straight on the desktop
+       and whatever is behind her shows through. -->
+  <div id="pet">
+    <div class="pet-body">
+      <!-- The pose player swaps this between `frames/*.png`; the file named
+           here is the one it starts on, so the first paint is never stale. -->
+      <img id="pet-image" src="frames/idle-a.png" alt="" draggable="false">
+    </div>
+  </div>
+  <div id="menu" role="menu" hidden>
+    <button id="menu-settings" role="menuitem">设置…</button>
+    <button id="menu-hide" role="menuitem">隐藏桌宠</button>
+  </div>
+  <script type="module" src="pet.js"></script>
+</body>
+</html>

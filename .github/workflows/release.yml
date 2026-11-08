@@ -1,0 +1,215 @@
+# Build the release tarball that the plugin market installs.
+#
+# The market prefers, in order: a registry package, a prebuilt GitHub Release
+# archive, and only then the repository source. This workflow produces the
+# second of those — the plugin with its compiled JavaScript and a pet window
+# binary for every platform already inside — because building the window needs
+# Rust and several minutes, and the market deliberately refuses to run install
+# scripts.
+#
+# One archive serves Windows, macOS and Linux: the plugin picks the binary that
+# matches the machine it runs on, so a single download is complete everywhere.
+# Each target is therefore built on a runner of its own, and the four binaries
+# are packed together in the second job. Cross-compiling would need a linker and
+# a WebKitGTK for each target; native runners need neither.
+#
+# The binaries are build products, so they are not in git (see .gitignore); they
+# are attached to the release instead. The artwork *is* in git, so a checkout can
+# build a window that draws her with nothing supplied.
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      # One target failing must not cancel the others: the log of the failure is
+      # the whole point of running them together.
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: win32-x64
+            binary: dsh-desktop-pet.exe
+          - os: ubuntu-latest
+            target: linux-x64
+            binary: dsh-desktop-pet
+          - os: macos-latest
+            target: darwin-arm64
+            binary: dsh-desktop-pet
+          - os: macos-13
+            target: darwin-x64
+            binary: dsh-desktop-pet
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # rustup reads rust-toolchain.toml from the repository root and installs
+      # the pinned channel on first use, so the machine's own stable channel
+      # never matters. Cargo must therefore be invoked with a working directory
+      # inside the repository — the build steps below do that.
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: pet-app/src-tauri
+
+      # A Tauri window draws with the system WebKitGTK on Linux, and that is a
+      # package manager concern rather than something cargo can fetch.
+      - name: Install the Linux window libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+
+      # The frames are committed, so this is a guard against a bad checkout
+      # rather than a fetch. Packing without them would ship a window that draws
+      # nothing, and tools/pack-release.mjs checks the same thing again.
+      - name: Check the artwork is present
+        shell: bash
+        run: |
+          count=$(find pet-app/public/frames -name '*.png' | wc -l)
+          echo "pose frames in the checkout: $count"
+          if [ "$count" -lt 34 ]; then
+            echo "::error::expected 34 committed pose frames under pet-app/public/frames, found $count. They are part of the repository — check that .gitignore has not grown a rule that excludes them."
+            exit 1
+          fi
+
+      - name: Install plugin dependencies
+        working-directory: plugin
+        run: npm ci
+
+      - name: Install window dependencies
+        working-directory: pet-app
+        run: npm ci
+
+      # Rust records the source path of every panic location in the binary, so a
+      # build made on a developer machine names that machine's home directory.
+      # Remapping the two prefixes that carry it keeps the published executable
+      # free of them; tools/pack-release.mjs independently refuses to pack a
+      # binary that still names someone's home directory or checkout.
+      - name: Build the window (Windows)
+        if: runner.os == 'Windows'
+        working-directory: pet-app
+        shell: pwsh
+        run: |
+          $env:RUSTFLAGS = "--remap-path-prefix=$env:USERPROFILE=~ --remap-path-prefix=$env:GITHUB_WORKSPACE=~"
+          npm run build
+
+      - name: Build the window (macOS and Linux)
+        if: runner.os != 'Windows'
+        working-directory: pet-app
+        run: |
+          export RUSTFLAGS="--remap-path-prefix=$HOME=~ --remap-path-prefix=$GITHUB_WORKSPACE=~"
+          npm run build
+
+      # The directory name is the contract with the plugin: it resolves
+      # bin/<platform>-<arch>/dsh-desktop-pet[.exe] at launch time.
+      - name: Stage the binary where the plugin looks for it
+        shell: bash
+        run: |
+          mkdir -p "plugin/bin/${{ matrix.target }}"
+          cp "pet-app/src-tauri/target/release/${{ matrix.binary }}" "plugin/bin/${{ matrix.target }}/${{ matrix.binary }}"
+          chmod +x "plugin/bin/${{ matrix.target }}/${{ matrix.binary }}" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.target }}
+          path: plugin/bin/${{ matrix.target }}/${{ matrix.binary }}
+          if-no-files-found: error
+
+  pack:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # One artifact per target; each lands in the directory the plugin expects,
+      # so the packer sees the same tree a full build would have produced.
+      - uses: actions/download-artifact@v4
+        with:
+          name: bin-win32-x64
+          path: plugin/bin/win32-x64
+      - uses: actions/download-artifact@v4
+        with:
+          name: bin-linux-x64
+          path: plugin/bin/linux-x64
+      - uses: actions/download-artifact@v4
+        with:
+          name: bin-darwin-arm64
+          path: plugin/bin/darwin-arm64
+      - uses: actions/download-artifact@v4
+        with:
+          name: bin-darwin-x64
+          path: plugin/bin/darwin-x64
+
+      # `prepare` runs the TypeScript build, so lib/ exists without a separate
+      # build step; this job never invokes cargo.
+      - name: Install plugin dependencies
+        working-directory: plugin
+        run: npm ci
+
+      # --require-all turns a missing platform into a failed release instead of
+      # an archive that installs without a window somewhere. It also re-checks
+      # that every binary carries no developer paths.
+      - name: Pack all four platforms into one tarball
+        run: node tools/pack-release.mjs --skip-build --require-all --out release
+
+      # npm names the tarball after the manifest version (`-0.1.0.tgz`) while a
+      # tag carries the `v` prefix. Rename it once so the asset name and the
+      # install URL in the release body are the same string, then keep a copy
+      # under a fixed name: /releases/latest/download/<fixed name> always
+      # resolves to the newest release, so the README can print one URL that
+      # never goes stale.
+      - name: Name the asset, and add a version-independent copy
+        shell: bash
+        run: |
+          set -euo pipefail
+          versioned="dsh-desktop-pet-codex-${GITHUB_REF_NAME}.tgz"
+          mv release/*.tgz "release/$versioned"
+          cp "release/$versioned" release/dsh-desktop-pet-codex.tgz
+          ls -l release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dsh-desktop-pet-codex-tarball
+          path: release/*.tgz
+          if-no-files-found: error
+
+      - name: Attach it to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.tgz
+          fail_on_unmatched_files: true
+          body: |
+            Point the plugin manager at the asset URL below. The archive already
+            contains the compiled plugin and a window binary for every platform,
+            so nothing is built locally:
+
+            ```
+            plugin_manager  action: install_bundle
+                            target: ${{ github.server_url }}/${{ github.repository }}/releases/latest/download/dsh-desktop-pet-codex.tgz
+            ```
+
+            That URL always resolves to the newest release. The asset named after
+            this tag is the same archive, for anyone pinning a version.
+
+            Linux needs WebKitGTK 4.1 at runtime (`libwebkit2gtk-4.1-0`), which Tauri draws
+            with — Debian 12+, Ubuntu 24.04+ and Fedora 39+ ship it. The macOS binary is
+            unsigned — see the README if Gatekeeper objects.

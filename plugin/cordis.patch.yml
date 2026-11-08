@@ -1,0 +1,29 @@
+# desktop-pet-codex bundle layer.
+#
+# Applied when a profile lists this bundle (see `dsh.profile.bundles`).
+# The pet is optional: removing this bundle leaves Harness functioning normally.
+#
+# This row is the OPERATIONAL configuration: ports, tokens, and whether to
+# launch the window. Appearance — size, font size, opacity, visibility, the
+# session list, always-on-top — is owned by the settings window (right-click the
+# pet → 设置) and stored in ~/.dsh/desktop-pet-codex/settings.json, so every
+# setting has exactly one owner and none can silently disagree with itself.
+- insert:
+    - id: desktop-pet-codex
+      name: 'dsh-desktop-pet-codex'
+      config:
+        enabled: true
+
+        # Bridge
+        port: 47600
+        portAttempts: 20
+        requireToken: true
+
+        # Window process (empty petExecutable resolves the packaged binary)
+        autoLaunch: true
+        petExecutable: ''
+        petArgs: []
+
+        # Behaviour
+        sleepAfterMs: 300000
+        resyncMs: 60000

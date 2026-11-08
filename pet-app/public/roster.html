@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Desktop Pet Roster</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-phase="idle" data-list="true" data-list-collapsed="false" data-connected="false">
+  <!-- The roster window: the only surface the pet has. It hangs above the
+       character window, which is positioned by the Rust half. -->
+  <div id="card">
+    <div id="header">
+      <div id="headline">–</div>
+      <!-- The fold is this window's own view state, not a setting: it is
+           remembered in localStorage and owned here alone. -->
+      <button id="list-toggle" type="button" data-toggle aria-expanded="true"
+              title="收起 / 展开会话列表">▾</button>
+    </div>
+    <div id="panel-body">
+      <div id="subtitle">connecting…</div>
+      <!-- The roster is a tree of Workspaces, built by the Host's pure core and
+           rendered here. It scrolls inside a fixed height rather than growing
+           the window, because the card is anchored above the pet. -->
+      <div id="sessions"></div>
+      <div id="hint">右键打开菜单</div>
+    </div>
+  </div>
+  <div id="menu" role="menu" hidden>
+    <button id="menu-settings" role="menuitem">设置…</button>
+    <button id="menu-hide" role="menuitem">隐藏桌宠</button>
+  </div>
+  <script type="module" src="roster.js"></script>
+</body>
+</html>

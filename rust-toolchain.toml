@@ -1,0 +1,8 @@
+# Tauri 2.12 requires rustc >= 1.90; the machine's `stable` channel resolves to
+# 1.89.0. Pinning here (the repository root) covers a build launched from either
+# `pet-app/` or `pet-app/src-tauri/`, since rustup walks up from the working
+# directory to find this file.
+[toolchain]
+channel = "1.93.0"
+targets = ["x86_64-pc-windows-msvc"]
+profile = "minimal"

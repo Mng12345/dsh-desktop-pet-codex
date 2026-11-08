@@ -1,0 +1,407 @@
+:root {
+  --phase-waiting: #fbbf24;
+  --phase-running: #38bdf8;
+  --phase-completed: #34d399;
+  --phase-stopped: #94a3b8;
+  /* Not a session phase: the quiet look, for an empty roster and for a
+     Workspace with nothing live in it. */
+  --phase-idle: #94a3b8;
+  --ink: #e8eef7;
+  --ink-dim: #9fb0c4;
+  --line: rgba(148, 163, 184, 0.22);
+  /* Written by the character window from the snapshot's settings. */
+  --scale: 1;
+  /* Written by the roster window from the snapshot's settings. */
+  --font-scale: 1;
+  --opacity: 0.94;
+  --alpha: var(--opacity);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  font: calc(12px * var(--font-scale)) / 1.45 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  color: var(--ink);
+  user-select: none;
+  cursor: default;
+}
+
+/* The mood is driven entirely by the dominant phase, and it is set on <body>
+   because the two windows are two documents: the character window animates from
+   it and the roster window takes its accent colour from it. `idle` is the quiet
+   look rather than a phase — it is what an empty roster sets. */
+body[data-phase="waiting"] { --accent: var(--phase-waiting); }
+body[data-phase="running"] { --accent: var(--phase-running); }
+body[data-phase="completed"] { --accent: var(--phase-completed); }
+body[data-phase="stopped"] { --accent: var(--phase-stopped); }
+body[data-phase="idle"] { --accent: var(--phase-idle); }
+
+/* -- the character window ---------------------------------------------------
+   This document holds the character and nothing else: no card, no border, no
+   text. She is drawn straight onto the desktop. */
+
+#pet {
+  /* The margin is transparent but not decorative: the drift and the hop would
+     be clipped by the frame edge without it. */
+  padding: 12px;
+  width: max-content;
+  line-height: 0;
+  zoom: var(--scale);
+}
+
+.pet-body { position: relative; line-height: 0; }
+
+#pet-image {
+  /* The frames are authored at 256, so this is one source pixel per CSS pixel. */
+  width: 256px;
+  height: 256px;
+  display: block;
+  /* The artwork is alpha-keyed, so it can sit straight on the desktop. */
+  object-fit: contain;
+  -webkit-user-drag: none;
+}
+
+body[data-connected="false"] #pet { filter: grayscale(1); opacity: 0.5; }
+
+/* The frames carry the character's movement — the breath, the keystroke, the
+   jump — so what is left here is only the whole sprite's slow drift. Anything
+   larger fights the animation rather than adding to it, which is why the old
+   phase-specific bounce and pulse are gone. */
+.pet-body { animation: drift 5.6s ease-in-out infinite; transform-origin: 50% 92%; }
+
+body[data-phase="running"] .pet-body { animation-duration: 3.4s; }
+
+@keyframes drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.8px); } }
+
+/* -- the roster window ------------------------------------------------------
+   The only surface the pet has. It hangs above the character window; where it
+   sits is the Rust half's business, not this stylesheet's. */
+
+#card {
+  /* Sized to its content, with a floor and a ceiling rather than a bare
+     `max-content`: every text node in here is `nowrap`, so without a definite
+     width one long session label would stretch the card — and therefore the
+     window — across the screen. The floor matches the character window's own
+     width, and a larger font scale is the only thing allowed to widen it. */
+  width: max(280px, calc(244px * var(--font-scale)));
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  /* The configured opacity fades the panel, never the text: a pet has to stay
+     readable over whatever happens to be behind it on the desktop. */
+  background: color-mix(in srgb, rgb(11 17 32) calc(var(--alpha) * 100%), transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  transition: background 140ms ease;
+}
+
+#card:hover { --alpha: 1; }
+
+#header { display: flex; align-items: center; gap: 6px; }
+
+#headline {
+  flex: 1 1 auto;
+  font-size: calc(15px * var(--font-scale));
+  font-weight: 650;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* A whole-line sentence ("3 个会话在等你", "全部空闲") carries the mood, so it
+     takes the accent. Result segments bring their own colour below, and the
+     accent stays behind as the colour of whatever sentence is on the line. */
+  color: var(--accent, var(--ink));
+}
+
+/* A result segment is a count and its word in the phase colour that owns it, so
+   three numbers on one line read as three separate statements instead of one
+   number whose meaning lives in a suffix. */
+#headline .headline-seg[data-phase="completed"] { color: var(--phase-completed); }
+#headline .headline-seg[data-phase="running"] { color: var(--phase-running); }
+#headline .headline-seg[data-phase="stopped"] { color: var(--phase-stopped); }
+
+/* The middots between segments are punctuation, not data, so they stay dim. */
+#headline .headline-sep { color: var(--ink-dim); }
+
+/* The fold. Its state belongs to this window alone — it is a view, not a
+   preference the settings window has to agree with — so the header carries the
+   only control that turns it, and it is the one part of the header that must
+   not start a window drag. */
+#list-toggle {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: calc(13px * var(--font-scale));
+  line-height: 1;
+  cursor: pointer;
+}
+
+#list-toggle:hover { background: rgba(148, 163, 184, 0.16); color: var(--ink); }
+#list-toggle:active { background: rgba(148, 163, 184, 0.26); }
+
+/* Folded: the headline stays, because it is the pet's one line of status. */
+body[data-list-collapsed="true"] #panel-body { display: none; }
+
+#subtitle { color: var(--ink-dim); font-size: calc(11px * var(--font-scale)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* The tree. It scrolls inside a fixed height rather than growing the window:
+   the card is anchored above the pet and grows upward, so an unbounded roster
+   would eventually walk off the top of the screen. The maximum is expressed in
+   the scaled pixel the rest of the card uses, so a larger font scale buys a
+   taller list rather than a clipped one. */
+#sessions {
+  margin: 5px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: calc(240px * var(--font-scale));
+  /* Vertical only. The rows carry a deliberate -4px horizontal margin so their
+     hover highlight bleeds into the card's padding, and with `overflow-y: auto`
+     the other axis computes to `auto` too — which turned that 4px of highlight
+     into a horizontal scrollbar. There is never anything to scroll to sideways;
+     every text node in here clips with an ellipsis. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The webkit pseudo-elements rather than `scrollbar-width: thin`, because
+   Chromium ignores them entirely once the standard property is set — and the
+   standard "thin" is 10px on a 280px card, where 6px is enough. */
+#sessions::-webkit-scrollbar { width: 6px; }
+#sessions::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.35);
+}
+#sessions::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.55); }
+
+.group { display: flex; flex-direction: column; gap: 2px; }
+
+/* A group header is a fold control, not a target: it carries the name, how
+   much is in it, and the colour of whatever is most urgent inside. */
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 1px 4px;
+  margin: 0 -4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.group-head:hover { background: rgba(148, 163, 184, 0.16); }
+.group-head:active { background: rgba(148, 163, 184, 0.26); }
+
+.group-name {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-counts {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 400;
+  font-size: calc(10px * var(--font-scale));
+  color: var(--ink-dim);
+  opacity: 0.8;
+}
+
+.group .chevron {
+  flex: 0 0 auto;
+  color: var(--ink-dim);
+  font-size: calc(10px * var(--font-scale));
+}
+
+/* Folded: the header stays, because the name and its counts are the summary. */
+.group[data-folded="true"] .group-body { display: none; }
+
+/* The group dot answers "is anything live in here", so it only ever takes an
+   activity colour; a group holding nothing but results keeps the grey default
+   while its counts still say what happened. */
+#sessions .group[data-phase="waiting"] > .group-head .dot { background: var(--phase-waiting); }
+#sessions .group[data-phase="running"] > .group-head .dot { background: var(--phase-running); }
+
+.group-body {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+#sessions li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  white-space: nowrap;
+  font-size: calc(11px * var(--font-scale));
+  color: var(--ink-dim);
+}
+
+/* A session row opens that session, so it reads as a target. */
+#sessions li[data-focus] {
+  position: relative;
+  padding: 1px 4px;
+  margin: 0 -4px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#sessions li[data-focus]:hover { background: rgba(148, 163, 184, 0.16); }
+#sessions li[data-focus]:active { background: rgba(148, 163, 184, 0.26); }
+
+/* A subagent is indented under the session that spawned it, so the tree reads
+   as one parent with its children rather than as a flat list of strangers. */
+#sessions li[data-nested="true"] { margin-left: calc(10px * var(--font-scale)); }
+
+#sessions .row-head {
+  display: grid;
+  grid-template-columns: 7px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 6px;
+}
+
+#sessions li[data-dismissible="true"] .row-head {
+  grid-template-columns: 7px minmax(0, 1fr) auto calc(22px * var(--font-scale));
+  column-gap: 8px;
+}
+
+/* The live answer, one line deep: the pet is an ambient indicator, so the
+   thought is a glance, not a reader. */
+#sessions .thought {
+  padding-left: calc(13px * var(--font-scale));
+  font-size: calc(10px * var(--font-scale));
+  line-height: 1.35;
+  color: var(--ink-dim);
+  opacity: 0.72;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#sessions li[data-thought="reasoning"] .thought { font-style: italic; }
+
+#sessions .dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--phase-idle);
+}
+
+#sessions li[data-phase="waiting"] .dot { background: var(--phase-waiting); }
+#sessions li[data-phase="running"] .dot { background: var(--phase-running); }
+#sessions li[data-phase="completed"] .dot { background: var(--phase-completed); }
+#sessions li[data-phase="stopped"] .dot { background: var(--phase-stopped); }
+
+#sessions li[data-phase="completed"] { --accent: var(--phase-completed); }
+#sessions li[data-phase="stopped"] { --accent: var(--phase-stopped); }
+
+/* The row grid gives result text and its control independent columns. */
+
+#sessions .name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#sessions .tool {
+  flex: 0 0 auto;
+  color: var(--accent, var(--ink-dim));
+  font-size: calc(10px * var(--font-scale));
+  opacity: 0.85;
+}
+
+/* Remove a retained result from the pet. Kept quiet until hover or focus. */
+#sessions .dismiss {
+  display: grid;
+  place-items: center;
+  width: calc(22px * var(--font-scale));
+  height: calc(22px * var(--font-scale));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--phase-completed);
+  font: inherit;
+  font-size: calc(10px * var(--font-scale));
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+}
+
+#sessions li[data-focus]:hover .dismiss { opacity: 0.85; }
+#sessions .dismiss:focus-visible { opacity: 1; }
+#sessions .dismiss:hover { opacity: 1; background: rgba(148, 163, 184, 0.22); }
+
+/* The raise was refused by the shell: the session still switched, but the
+   window did not come forward, and saying so is more honest than silence. */
+body[data-raise-failed="true"] #hint::after { content: ' · 窗口未能置前'; color: var(--phase-waiting); }
+
+#hint {
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: calc(10px * var(--font-scale));
+  color: var(--ink-dim);
+  opacity: 0.55;
+}
+
+/* -- the context menu, installed in both windows ----------------------------
+   It lives inside the same transparent window as its page, so it needs its own
+   opaque surface rather than inheriting the card's. */
+
+#menu {
+  position: fixed;
+  z-index: 10;
+  min-width: 132px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgb(11 17 32);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+#menu[hidden] { display: none; }
+
+#menu button {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+#menu button:hover { background: rgba(148, 163, 184, 0.16); }

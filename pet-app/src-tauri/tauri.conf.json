@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "dsh-desktop-pet",
+  "version": "0.1.0",
+  "identifier": "ai.deepseek.dsh.desktop-pet-codex",
+  "build": {
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "pet",
+        "url": "pet.html",
+        "title": "Desktop Pet",
+        "width": 280,
+        "height": 280,
+        "resizable": false,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "focus": false,
+        "visible": true
+      },
+      {
+        "label": "roster",
+        "url": "roster.html",
+        "title": "Desktop Pet Roster",
+        "width": 320,
+        "height": 190,
+        "resizable": false,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "focus": false,
+        "visible": true
+      },
+      {
+        "label": "settings",
+        "url": "settings.html",
+        "title": "桌宠设置",
+        "width": 430,
+        "height": 580,
+        "minWidth": 360,
+        "minHeight": 420,
+        "resizable": true,
+        "transparent": false,
+        "decorations": true,
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "center": true,
+        "theme": "dark",
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}
