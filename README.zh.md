@@ -5,9 +5,85 @@
 给 DeepSeek Harness 用的桌面宠物：一个常驻置顶的小角色，加一块只显示你在意的会话在做什么的状态面板。
 项目分两半，共用一层约定——读取 Harness 的 DSH 宿主插件，和负责把状态画出来的 Tauri 窗口。
 
-![桌宠与状态面板](docs/window.png)
+<table align="center">
+  <tr>
+    <td align="center"><img src="docs/states/idle.gif" width="112" alt="待机"></td>
+    <td align="center"><img src="docs/states/run.gif" width="112" alt="工作"></td>
+    <td align="center"><img src="docs/states/wait.gif" width="112" alt="等待"></td>
+    <td align="center"><img src="docs/states/happy.gif" width="112" alt="完成"></td>
+    <td align="center"><img src="docs/states/wave.gif" width="112" alt="招手"></td>
+    <td align="center"><img src="docs/states/heart.gif" width="112" alt="爱心"></td>
+    <td align="center"><img src="docs/states/doze.gif" width="112" alt="打盹"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>待机</sub></td>
+    <td align="center"><sub>工作</sub></td>
+    <td align="center"><sub>等待</sub></td>
+    <td align="center"><sub>完成</sub></td>
+    <td align="center"><sub>招手</sub></td>
+    <td align="center"><sub>爱心</sub></td>
+    <td align="center"><sub>打盹</sub></td>
+  </tr>
+</table>
 
-![设置窗口](docs/settings.png)
+七段动画：四种循环状态，三种一次性反应；下面两节讲它们和会话列表。
+
+## 角色状态
+
+角色只有一张脸，所以 roster 得折叠成一种情绪：注意力压过动作，动作压过结果——等待中的会话排在
+工作中的之前，工作中的排在已完成之前；`stopped` 没有自己的表情，借用安静的那一套。没人等待时，
+角色呈现的是最紧急那条会话的结果，所以一个完成的回合会一直留在脸上，直到有别的事情发生。
+
+| 状态 | 动作 | 何时出现 |
+|---|---|---|
+| 待机 | 双手交叠站着；呼吸、眨眼（节拍不均）、换重心 | 没有可汇报的事情——roster 为空，或其中最紧急的会话已停止 |
+| 工作 | 侧身原地跑，手臂和腿循环摆动 | 有被跟踪的会话在干活；子代理干活时按父会话的「工作」呈现 |
+| 等待 | 举起一只手，像在招呼人，停住，再放下 | 有被跟踪的会话卡在用户这里——审批、待回答的问题、阻塞中的工具调用 |
+| 完成 | 双臂举起蹦一下，落地后站定 | 有被跟踪的会话结束了回合 |
+| 招手 | 抬起一只手挥两下 | 点击角色 |
+| 爱心 | 双手在胸前合拢，闭上眼 | 指针落到角色身上，最多每 6 秒一次 |
+| 打盹 | 站着睡着——闭眼、低头——然后惊醒 | roster 空了五分钟；每段安静期只播一次 |
+
+最后三个是一次性分段：它们在当前场景之上播放，播完把画面交回场景，只有真正的场景切换才会打断。
+场景表在 `pet-app/src/pet-frames.ts`；上面七个文件名就是代码里的场景名——`idle`、`run`、`wait`、
+`happy`、`wave`、`heart`、`doze`。
+
+`docs/states/` 下的 GIF 由 `node tools/gen-readme-gifs.mjs` 用同一份帧表渲染，美术资源不重复入库。
+
+## 会话列表
+
+会话列表窗口把桌宠跟踪的会话列出来：只放用户跟踪的，而不是 DSH 知道的所有会话，按 Workspace 分组，
+挂在角色上方。
+
+<p align="center"><img src="docs/roster.png" width="330" alt="会话列表"></p>
+
+<p align="center"><sub>示例数据：三个 Workspace，两条会话在等用户，两行缩进的子代理。</sub></p>
+
+**标题行统计的是要找用户的会话。** 只要有一个被跟踪的会话在等，这一行就用等待色写
+`2 个会话在等你`；否则拆成结果，每个有数的阶段各一段、各带自己的颜色——`1 完成 · 2 进行 · 1 停止`——
+空 roster 则显示 `全部空闲`。下面一行是总数：`共 6 个会话 · 2 在等你 · 2 进行中 · 1 已完成 · 1 已停止 ·
+2 个子代理`，只有存在子代理时才带子代理数。
+
+**分组就是 Workspace**，组头是 Workspace 名、本组计数，以及一个按组内最紧急活跃阶段上色的小圆点
+（没有活跃阶段时是灰色）。点组头可以折叠这一组，折叠状态记在窗口自己这里，不进设置。
+
+**一行是一条会话。** 名字是会话标题，没有就退到目录，再没有就用短 id。旁边：运行时显示最近调用的
+工具名（`bash`），等待时固定写 `等你`——要找用户的行说的是「需要什么」，而不是「调用了什么」；
+结束之后写 `已完成` 或 `已停止`。运行中的行可以在第二行带上最近的想法；已有结果的行带一个 ✓，
+点它把这条会话从桌宠上移除。
+
+**子代理永远不会单独成行。** 它们缩进挂在派发它的父会话下面，也不计入统计：子代理在干活就是父会话
+在干活。
+
+**点一行会打开那条会话。** 把 DSH 提到前台只有窗口进程做得到，切换会话只有插件的浏览器端做得到，
+所以这两个动作互不等待：窗口先把请求挂进信箱（`PUT /focus`，回 `202`），页面在请求经 SSE 推过去时
+才切换。Windows 上 DSH 窗口还会一并提到最前；其他平台只是打开 DSH。
+
+**列表可以收起，角色一直留着。** 标题栏的 ▾ 把面板折到只剩标题行，并记在窗口里；关掉
+`showSessionList` 则整个窗口都不存在，桌面上只剩角色。右键角色或面板，是 `设置…` 和 `隐藏桌宠`。
+
+**bridge 断掉时**上一份 roster 会留在屏幕上，副标题改成 `未连接 DSH`（重连期间是 `正在连接 DSH…`），
+而不是显示一个空列表；角色变灰而不是消失。
 
 ## 架构
 
@@ -129,6 +205,8 @@ cd pet-app && npm ci && npm run build   # build:icon、build:ui，然后 cargo b
 | `showSessionList` | `true` | — | 会话列表窗口是否存在。 |
 | `alwaysOnTop` | `true` | — | 这一对窗口是否悬浮在其他窗口之上。 |
 
+![设置窗口](docs/settings.png)
+
 外观写入是实时的，并且返回的是**被钳制后的值**而不是一句“收到”，所以面板显示的永远是真正生效的结果；
 改动管线配置则会重新应用插件行，bridge 会短暂重启一次。
 
@@ -176,8 +254,9 @@ pet-app/
   src/                  各窗口接线、快照模型、SSE 客户端、动画表
   public/               pet.html、roster.html、settings.html、style.css、frames/
   src-tauri/src/lib.rs  窗口机制：透明、置顶、点击穿透、两窗几何关系
-tools/                  pack-release.mjs 负责构建与打包；gen-pet-frames.mjs 重新生成姿态帧
-docs/                  上面那两张截图
+tools/                  pack-release.mjs 构建与打包；gen-pet-frames.mjs 画姿态帧；
+                        gen-readme-gifs.mjs 把帧表重放成 docs/states/ 里的 GIF
+docs/                   状态动图、会话列表示例图、设置窗口截图
 ```
 
 ## 许可

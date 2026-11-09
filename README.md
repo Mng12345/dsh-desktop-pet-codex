@@ -6,9 +6,96 @@ A desktop pet for DeepSeek Harness: a small always-on-top character plus a roste
 what the conversations you care about are doing. It is two halves under one contract — a DSH Host
 plugin that reads the Harness, and a Tauri window that draws it.
 
-![The pet and its roster on the desktop](docs/window.png)
+<table align="center">
+  <tr>
+    <td align="center"><img src="docs/states/idle.gif" width="112" alt="Idle"></td>
+    <td align="center"><img src="docs/states/run.gif" width="112" alt="Working"></td>
+    <td align="center"><img src="docs/states/wait.gif" width="112" alt="Waiting"></td>
+    <td align="center"><img src="docs/states/happy.gif" width="112" alt="Finished"></td>
+    <td align="center"><img src="docs/states/wave.gif" width="112" alt="Wave"></td>
+    <td align="center"><img src="docs/states/heart.gif" width="112" alt="Heart"></td>
+    <td align="center"><img src="docs/states/doze.gif" width="112" alt="Nap"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Idle</sub></td>
+    <td align="center"><sub>Working</sub></td>
+    <td align="center"><sub>Waiting</sub></td>
+    <td align="center"><sub>Finished</sub></td>
+    <td align="center"><sub>Wave</sub></td>
+    <td align="center"><sub>Heart</sub></td>
+    <td align="center"><sub>Nap</sub></td>
+  </tr>
+</table>
 
-![The settings window](docs/settings.png)
+Seven animations: four looping states the pet switches between, and three short reactions it plays
+once. They are described below, together with the roster panel.
+
+## Character states
+
+A pet has one face, so the roster collapses to one mood. Attention beats activity beats aftermath: a
+waiting conversation outranks a working one, a working one outranks a finished one, and `stopped` has
+no face of its own — it borrows the quiet pose. While nobody waits, the pet wears the outcome of the
+most urgent conversation, so a finished turn stays on screen until something else happens.
+
+| State | Animation | Shows when |
+|---|---|---|
+| Idle | stands with her hands clasped; breathes, blinks on an uneven beat, shifts her weight | nothing to report — the roster is empty, or its most urgent conversation has stopped |
+| Working | runs in profile, arms and legs cycling | a watched conversation is working; a subagent working arrives as its parent working |
+| Waiting | lifts a hand as if flagging someone down, holds it, then lowers it | a watched conversation is blocked on the reader — an approval, a question, a blocking tool call |
+| Finished | hops with both arms up, lands and settles | a watched conversation finished its turn |
+| Wave | raises one hand and waves it twice | the character is clicked |
+| Heart | presses her hands together at her chest and closes her eyes | the pointer lands on the character, at most once every 6 seconds |
+| Nap | drifts off standing up — eyes close, head drops — then catches herself | the roster has been empty for five minutes; once per quiet spell |
+
+The last three are one-shot segments: they play over whichever scene is showing, hand the sprite back
+when they end, and only a real scene change cuts one short. The scene tables live in
+`pet-app/src/pet-frames.ts`; the seven files shown above are named for their code names — `idle`,
+`run`, `wait`, `happy`, `wave`, `heart`, `doze`.
+
+The GIFs under `docs/states/` are rendered from the same frame tables the window plays, by
+`node tools/gen-readme-gifs.mjs` — no artwork is committed twice.
+
+## Session list
+
+The roster window is where the pet lists what it watches: the conversations the reader tracks, not
+every session DSH knows, grouped by Workspace and anchored above the character.
+
+<p align="center"><img src="docs/roster.png" width="330" alt="The session list"></p>
+
+<p align="center"><sub>Sample data: three Workspaces, two conversations waiting on the reader, and two indented subagent rows.</sub></p>
+
+**The header line counts what needs the reader.** While at least one watched conversation waits, it
+reads `2 个会话在等你` in the waiting colour. Otherwise it splits into the outcomes, one coloured
+segment per phase that has any — `1 完成 · 2 进行 · 1 停止` — and an empty roster reads `全部空闲`. The
+line under it is the total: `共 6 个会话 · 2 在等你 · 2 进行中 · 1 已完成 · 1 已停止 · 2 个子代理`, with the
+subagent count only when there are subagents.
+
+**Groups are Workspaces**, each with the Workspace name, its own counts, and a dot coloured by the most
+urgent live phase inside it (grey when nothing is live). Clicking a group head folds it, and the fold
+is remembered by this window rather than by the settings.
+
+**A row is a conversation.** The name is the conversation's title, falling back to its directory and
+then a short id. Beside it sits the last tool while it runs (`bash`), `等你` while it waits — a row
+that needs the reader says what it needs, not what it called — and `已完成` or `已停止` once it
+settles. A running row can carry its last thought on a second line, and a retained result carries a ✓
+that removes that conversation from the pet.
+
+**Subagents are never rows of their own.** They hang indented under the parent that dispatched them,
+and they are not counted: a child working is its parent working.
+
+**A click opens that conversation.** Only the window process can raise DSH and only the plugin's
+browser half can switch sessions, so the two actions do not wait for each other: the window parks the
+request (`PUT /focus`, answered `202`) and the page switches when the request is pushed over SSE. On
+Windows the DSH window also comes to the front; elsewhere DSH is opened instead.
+
+**The list folds; the character stays.** The ▾ in the header collapses the panel to its header line
+and remembers that in the window, and turning `showSessionList` off removes the window altogether,
+leaving the character alone on the desktop. Right-clicking the character or the panel offers
+`设置…` and `隐藏桌宠`.
+
+**When the bridge is down** the last roster stays on screen and the subtitle says `未连接 DSH`
+(`正在连接 DSH…` while retrying) instead of showing an empty list; the character greys out rather than
+disappearing.
 
 ## Architecture
 
@@ -137,6 +224,8 @@ Appearance has one owner, the settings window — right-click the pet → **设�
 | `showSessionList` | `true` | — | Whether the roster window exists at all. |
 | `alwaysOnTop` | `true` | — | Whether the pair floats above other windows. |
 
+![The settings window](docs/settings.png)
+
 Appearance writes are live and answer with the **clamped** value, not an acknowledgement, so the panel
 always shows what took effect; a plumbing change re-applies the row and briefly restarts the bridge.
 
@@ -187,8 +276,9 @@ pet-app/
   src/                  the windows' wiring, snapshot model, SSE client, animation tables
   public/               pet.html, roster.html, settings.html, style.css, frames/
   src-tauri/src/lib.rs  window mechanics: transparent, always-on-top, click-through, geometry
-tools/                  pack-release.mjs builds and packs; gen-pet-frames.mjs regenerates the frames
-docs/                   the two screenshots above
+tools/                  pack-release.mjs builds and packs; gen-pet-frames.mjs draws the frames;
+                        gen-readme-gifs.mjs replays them into docs/states/ for this README
+docs/                   the state GIFs, the roster sample, and the settings screenshot
 ```
 
 ## License
