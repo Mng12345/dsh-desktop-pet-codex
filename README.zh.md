@@ -7,13 +7,13 @@
 
 <table align="center">
   <tr>
-    <td align="center"><img src="docs/states/idle.gif" width="112" alt="待机"></td>
-    <td align="center"><img src="docs/states/run.gif" width="112" alt="工作"></td>
-    <td align="center"><img src="docs/states/wait.gif" width="112" alt="等待"></td>
-    <td align="center"><img src="docs/states/happy.gif" width="112" alt="完成"></td>
-    <td align="center"><img src="docs/states/wave.gif" width="112" alt="招手"></td>
-    <td align="center"><img src="docs/states/heart.gif" width="112" alt="爱心"></td>
-    <td align="center"><img src="docs/states/doze.gif" width="112" alt="打盹"></td>
+    <td align="center"><img src="docs/states/idle.gif" width="96" alt="待机"></td>
+    <td align="center"><img src="docs/states/run.gif" width="96" alt="工作"></td>
+    <td align="center"><img src="docs/states/wait.gif" width="96" alt="等待"></td>
+    <td align="center"><img src="docs/states/happy.gif" width="96" alt="完成"></td>
+    <td align="center"><img src="docs/states/wave.gif" width="96" alt="招手"></td>
+    <td align="center"><img src="docs/states/heart.gif" width="96" alt="爱心"></td>
+    <td align="center"><img src="docs/states/doze.gif" width="96" alt="打盹"></td>
   </tr>
   <tr>
     <td align="center"><sub>待机</sub></td>
@@ -36,13 +36,13 @@
 
 | 状态 | 动作 | 何时出现 |
 |---|---|---|
-| 待机 | 双手交叠站着；呼吸、眨眼（节拍不均）、换重心 | 没有可汇报的事情——roster 为空，或其中最紧急的会话已停止 |
-| 工作 | 侧身原地跑，手臂和腿循环摆动 | 有被跟踪的会话在干活；子代理干活时按父会话的「工作」呈现 |
-| 等待 | 举起一只手，像在招呼人，停住，再放下 | 有被跟踪的会话卡在用户这里——审批、待回答的问题、阻塞中的工具调用 |
-| 完成 | 双臂举起蹦一下，落地后站定 | 有被跟踪的会话结束了回合 |
-| 招手 | 抬起一只手挥两下 | 点击角色 |
-| 爱心 | 双手在胸前合拢，闭上眼 | 指针落到角色身上，最多每 6 秒一次 |
-| 打盹 | 站着睡着——闭眼、低头——然后惊醒 | roster 空了五分钟；每段安静期只播一次 |
+| **待机**<br><img src="docs/states/idle.gif" width="96" alt="待机"> | 双手交叠站着；呼吸、眨眼（节拍不均）、换重心 | 没有可汇报的事情——roster 为空，或其中最紧急的会话已停止 |
+| **工作**<br><img src="docs/states/run.gif" width="96" alt="工作"> | 侧身原地跑，手臂和腿循环摆动 | 有被跟踪的会话在干活；子代理干活时按父会话的「工作」呈现 |
+| **等待**<br><img src="docs/states/wait.gif" width="96" alt="等待"> | 举起一只手，像在招呼人，停住，再放下 | 有被跟踪的会话卡在用户这里——审批、待回答的问题、阻塞中的工具调用 |
+| **完成**<br><img src="docs/states/happy.gif" width="96" alt="完成"> | 双臂举起蹦一下，落地后站定 | 有被跟踪的会话结束了回合 |
+| **招手**<br><img src="docs/states/wave.gif" width="96" alt="招手"> | 抬起一只手挥两下 | 点击角色 |
+| **爱心**<br><img src="docs/states/heart.gif" width="96" alt="爱心"> | 双手在胸前合拢，闭上眼 | 指针落到角色身上，最多每 6 秒一次 |
+| **打盹**<br><img src="docs/states/doze.gif" width="96" alt="打盹"> | 站着睡着——闭眼、低头——然后惊醒 | roster 空了五分钟；每段安静期只播一次 |
 
 最后三个是一次性分段：它们在当前场景之上播放，播完把画面交回场景，只有真正的场景切换才会打断。
 场景表在 `pet-app/src/pet-frames.ts`；上面七个文件名就是代码里的场景名——`idle`、`run`、`wait`、

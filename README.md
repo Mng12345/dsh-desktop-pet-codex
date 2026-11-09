@@ -8,13 +8,13 @@ plugin that reads the Harness, and a Tauri window that draws it.
 
 <table align="center">
   <tr>
-    <td align="center"><img src="docs/states/idle.gif" width="112" alt="Idle"></td>
-    <td align="center"><img src="docs/states/run.gif" width="112" alt="Working"></td>
-    <td align="center"><img src="docs/states/wait.gif" width="112" alt="Waiting"></td>
-    <td align="center"><img src="docs/states/happy.gif" width="112" alt="Finished"></td>
-    <td align="center"><img src="docs/states/wave.gif" width="112" alt="Wave"></td>
-    <td align="center"><img src="docs/states/heart.gif" width="112" alt="Heart"></td>
-    <td align="center"><img src="docs/states/doze.gif" width="112" alt="Nap"></td>
+    <td align="center"><img src="docs/states/idle.gif" width="96" alt="Idle"></td>
+    <td align="center"><img src="docs/states/run.gif" width="96" alt="Working"></td>
+    <td align="center"><img src="docs/states/wait.gif" width="96" alt="Waiting"></td>
+    <td align="center"><img src="docs/states/happy.gif" width="96" alt="Finished"></td>
+    <td align="center"><img src="docs/states/wave.gif" width="96" alt="Wave"></td>
+    <td align="center"><img src="docs/states/heart.gif" width="96" alt="Heart"></td>
+    <td align="center"><img src="docs/states/doze.gif" width="96" alt="Nap"></td>
   </tr>
   <tr>
     <td align="center"><sub>Idle</sub></td>
@@ -39,13 +39,13 @@ most urgent conversation, so a finished turn stays on screen until something els
 
 | State | Animation | Shows when |
 |---|---|---|
-| Idle | stands with her hands clasped; breathes, blinks on an uneven beat, shifts her weight | nothing to report — the roster is empty, or its most urgent conversation has stopped |
-| Working | runs in profile, arms and legs cycling | a watched conversation is working; a subagent working arrives as its parent working |
-| Waiting | lifts a hand as if flagging someone down, holds it, then lowers it | a watched conversation is blocked on the reader — an approval, a question, a blocking tool call |
-| Finished | hops with both arms up, lands and settles | a watched conversation finished its turn |
-| Wave | raises one hand and waves it twice | the character is clicked |
-| Heart | presses her hands together at her chest and closes her eyes | the pointer lands on the character, at most once every 6 seconds |
-| Nap | drifts off standing up — eyes close, head drops — then catches herself | the roster has been empty for five minutes; once per quiet spell |
+| **Idle**<br><img src="docs/states/idle.gif" width="96" alt="Idle"> | stands with her hands clasped; breathes, blinks on an uneven beat, shifts her weight | nothing to report — the roster is empty, or its most urgent conversation has stopped |
+| **Working**<br><img src="docs/states/run.gif" width="96" alt="Working"> | runs in profile, arms and legs cycling | a watched conversation is working; a subagent working arrives as its parent working |
+| **Waiting**<br><img src="docs/states/wait.gif" width="96" alt="Waiting"> | lifts a hand as if flagging someone down, holds it, then lowers it | a watched conversation is blocked on the reader — an approval, a question, a blocking tool call |
+| **Finished**<br><img src="docs/states/happy.gif" width="96" alt="Finished"> | hops with both arms up, lands and settles | a watched conversation finished its turn |
+| **Wave**<br><img src="docs/states/wave.gif" width="96" alt="Wave"> | raises one hand and waves it twice | the character is clicked |
+| **Heart**<br><img src="docs/states/heart.gif" width="96" alt="Heart"> | presses her hands together at her chest and closes her eyes | the pointer lands on the character, at most once every 6 seconds |
+| **Nap**<br><img src="docs/states/doze.gif" width="96" alt="Nap"> | drifts off standing up — eyes close, head drops — then catches herself | the roster has been empty for five minutes; once per quiet spell |
 
 The last three are one-shot segments: they play over whichever scene is showing, hand the sprite back
 when they end, and only a real scene change cuts one short. The scene tables live in
