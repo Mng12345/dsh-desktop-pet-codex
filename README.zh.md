@@ -55,7 +55,7 @@
 会话列表窗口把桌宠跟踪的会话列出来：只放用户跟踪的，而不是 DSH 知道的所有会话，按 Workspace 分组，
 挂在角色上方。
 
-<p align="center"><img src="docs/roster.png" width="330" alt="会话列表"></p>
+<p align="center"><img src="docs/roster.png" width="480" alt="会话列表"></p>
 
 <p align="center"><sub>示例数据：三个 Workspace，两条会话在等用户，两行缩进的子代理。</sub></p>
 

@@ -60,7 +60,7 @@ The GIFs under `docs/states/` are rendered from the same frame tables the window
 The roster window is where the pet lists what it watches: the conversations the reader tracks, not
 every session DSH knows, grouped by Workspace and anchored above the character.
 
-<p align="center"><img src="docs/roster.png" width="330" alt="The session list"></p>
+<p align="center"><img src="docs/roster.png" width="480" alt="The session list"></p>
 
 <p align="center"><sub>Sample data: three Workspaces, two conversations waiting on the reader, and two indented subagent rows.</sub></p>
 
