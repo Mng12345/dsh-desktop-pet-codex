@@ -7,13 +7,13 @@
 
 <table align="center">
   <tr>
-    <td align="center"><img src="docs/states/idle.gif" width="96" alt="待机"></td>
-    <td align="center"><img src="docs/states/run.gif" width="96" alt="工作"></td>
-    <td align="center"><img src="docs/states/wait.gif" width="96" alt="等待"></td>
-    <td align="center"><img src="docs/states/happy.gif" width="96" alt="完成"></td>
-    <td align="center"><img src="docs/states/wave.gif" width="96" alt="招手"></td>
-    <td align="center"><img src="docs/states/heart.gif" width="96" alt="爱心"></td>
-    <td align="center"><img src="docs/states/doze.gif" width="96" alt="打盹"></td>
+    <td align="center"><img src="docs/states/idle.gif" width="88" alt="待机"></td>
+    <td align="center"><img src="docs/states/run.gif" width="88" alt="工作"></td>
+    <td align="center"><img src="docs/states/wait.gif" width="88" alt="等待"></td>
+    <td align="center"><img src="docs/states/happy.gif" width="88" alt="完成"></td>
+    <td align="center"><img src="docs/states/wave.gif" width="88" alt="招手"></td>
+    <td align="center"><img src="docs/states/heart.gif" width="88" alt="爱心"></td>
+    <td align="center"><img src="docs/states/doze.gif" width="88" alt="打盹"></td>
   </tr>
   <tr>
     <td align="center"><sub>待机</sub></td>

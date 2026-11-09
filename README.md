@@ -8,13 +8,13 @@ plugin that reads the Harness, and a Tauri window that draws it.
 
 <table align="center">
   <tr>
-    <td align="center"><img src="docs/states/idle.gif" width="96" alt="Idle"></td>
-    <td align="center"><img src="docs/states/run.gif" width="96" alt="Working"></td>
-    <td align="center"><img src="docs/states/wait.gif" width="96" alt="Waiting"></td>
-    <td align="center"><img src="docs/states/happy.gif" width="96" alt="Finished"></td>
-    <td align="center"><img src="docs/states/wave.gif" width="96" alt="Wave"></td>
-    <td align="center"><img src="docs/states/heart.gif" width="96" alt="Heart"></td>
-    <td align="center"><img src="docs/states/doze.gif" width="96" alt="Nap"></td>
+    <td align="center"><img src="docs/states/idle.gif" width="88" alt="Idle"></td>
+    <td align="center"><img src="docs/states/run.gif" width="88" alt="Working"></td>
+    <td align="center"><img src="docs/states/wait.gif" width="88" alt="Waiting"></td>
+    <td align="center"><img src="docs/states/happy.gif" width="88" alt="Finished"></td>
+    <td align="center"><img src="docs/states/wave.gif" width="88" alt="Wave"></td>
+    <td align="center"><img src="docs/states/heart.gif" width="88" alt="Heart"></td>
+    <td align="center"><img src="docs/states/doze.gif" width="88" alt="Nap"></td>
   </tr>
   <tr>
     <td align="center"><sub>Idle</sub></td>
