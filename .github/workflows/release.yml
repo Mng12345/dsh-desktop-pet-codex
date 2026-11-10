@@ -1,11 +1,13 @@
 # Build the release tarball that the plugin market installs.
 #
 # The market prefers, in order: a registry package, a prebuilt GitHub Release
-# archive, and only then the repository source. This workflow produces the
-# second of those — the plugin with its compiled JavaScript and a pet window
-# binary for every platform already inside — because building the window needs
+# archive, and only then the repository source. This workflow produces both of
+# the first two — it publishes the plugin to npm with the window binary for
+# every platform inside the tarball, and attaches the same tree to the GitHub
+# Release as a `.tgz` for anyone pinning a version. Building the window needs
 # Rust and several minutes, and the market deliberately refuses to run install
-# scripts.
+# scripts, so the binaries are staged into `plugin/bin/<platform>-<arch>/`
+# before either artifact is produced.
 #
 # One archive serves Windows, macOS and Linux: the plugin picks the binary that
 # matches the machine it runs on, so a single download is complete everywhere.
@@ -29,6 +31,9 @@ on:
 
 permissions:
   contents: write
+  # Trusted publishing: the publish step exchanges this job's OIDC token for a
+  # short-lived npm credential, so the repository stores no npm token.
+  id-token: write
 
 jobs:
   build:
@@ -191,7 +196,7 @@ jobs:
       - name: Pack all four platforms into one tarball
         run: node tools/pack-release.mjs --skip-build --require-all --out release
 
-      # npm names the tarball after the manifest version (`-0.1.0.tgz`) while a
+      # npm names the tarball after the manifest version (`-<version>.tgz`) while a
       # tag carries the `v` prefix. Rename it once so the asset name and the
       # install URL in the release body are the same string, then keep a copy
       # under a fixed name: /releases/latest/download/<fixed name> always
@@ -206,6 +211,46 @@ jobs:
           cp "release/$versioned" release/dsh-desktop-pet-codex.tgz
           ls -l release
 
+      # The tag and plugin/package.json must agree before anything leaves the
+      # runner: npm keeps a version forever, so a typo here is not re-publishable.
+      - name: Check the tag names this package version
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$version" != "$tag" ]; then
+            echo "tag ${GITHUB_REF_NAME} names version ${tag}, but plugin/package.json is ${version}" >&2
+            exit 1
+          fi
+          echo "releasing dsh-desktop-pet-codex@${version}"
+
+      # Trusted publishing is newer than the npm the runner image ships with.
+      # The npm docs use exactly this step, so it runs as the runner user.
+      - name: Upgrade npm for trusted publishing
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          npm install --global npm@latest
+          npm --version
+
+      # Trusted publishing exchanges the job's OIDC token for a short-lived
+      # credential, so no npm token lives in the repository. The existence check
+      # makes a re-run of an already published tag a no-op instead of a failure.
+      - name: Publish to npm
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          if npm view "dsh-desktop-pet-codex@${version}" version >/dev/null 2>&1; then
+            echo "dsh-desktop-pet-codex@${version} is already on npm; skipping publish."
+            exit 0
+          fi
+          npm publish --provenance --access public
+
       - uses: actions/upload-artifact@v4
         with:
           name: dsh-desktop-pet-codex-tarball
@@ -219,9 +264,16 @@ jobs:
           files: release/*.tgz
           fail_on_unmatched_files: true
           body: |
-            Point the plugin manager at the asset URL below. The archive already
-            contains the compiled plugin and a window binary for every platform,
-            so nothing is built locally:
+            Install from npm (the tarball already carries the window binary for
+            every platform, so nothing is built or downloaded during install):
+
+            ```
+            plugin_manager  action: install_bundle  target: dsh-desktop-pet-codex
+            ```
+
+            The Web sidebar's Plugins → Add plugin takes the same package name.
+            Or point the plugin manager at the release archive below, which holds
+            the same files for anyone pinning a version:
 
             ```
             plugin_manager  action: install_bundle

@@ -106,10 +106,23 @@ DSH 页面自己用的四条路由——`/desktop-pet/focus`、`/desktop-pet/foc
 
 ## 安装
 
-需要 **DSH >= 0.2.0-rc.2**。发布压缩包里带着三平台的窗口二进制——Windows（x64）、macOS（Apple 芯片
-和 Intel）、Linux（x64）——所以同一次下载在任何一台上都能装全，本地不构建任何东西。
+需要 **DSH >= 0.2.0-rc.2**。npm 包和发布压缩包都带着四平台的窗口二进制——Windows（x64）、macOS（Apple
+芯片和 Intel）、Linux（x64）——所以任选一种装一次，本地都不构建任何东西。
 
-### 安装发布包（正式安装方式）
+### 从 npm 安装（正式安装方式）
+
+在 Web 侧栏打开 **插件 → Add plugin**，把包名填进去；或者交给插件管理器：
+
+```
+plugin_manager  action: install_bundle  target: dsh-desktop-pet-codex
+```
+
+要固定版本就写 `dsh-desktop-pet-codex@0.1.1`。包里已经有编译好的插件和四平台窗口二进制，所以安装时不
+跑安装脚本、不需要构建，启动时也不联网下载。
+
+等插件进了社区目录之后，在插件市场里搜索桌宠也能一键安装。
+
+### 安装发布包（固定版本或 npm 不可达时）
 
 把插件管理器的目标指向这个资源直链：
 

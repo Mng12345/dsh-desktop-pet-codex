@@ -23,12 +23,15 @@ Tauri application that reads that bridge and draws the pet plus a status panel.
 
 ## Install
 
+Ask for the package by name — in the Web sidebar **Plugins → Add plugin**, or through the plugin manager:
+
 ```
-plugin_manager  action: install_bundle  target: <path-to>/plugin
+plugin_manager  action: install_bundle  target: dsh-desktop-pet-codex
 ```
 
-For the complete experience — plugin plus prebuilt window binary — install the
-release tarball instead, and point `install_bundle` at the `.tgz` asset.
+The tarball carries the compiled plugin and the window binary for every platform, so installing it runs no
+install scripts, needs no build step, and downloads nothing at start-up. A source checkout has no window
+binary; install this package or the GitHub Release tarball for the complete experience.
 
 ## Configuration
 

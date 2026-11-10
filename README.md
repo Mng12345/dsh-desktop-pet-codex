@@ -118,13 +118,29 @@ page is served from that origin, so there is no CORS and no second token.
 
 ## Install
 
-Requires **DSH >= 0.2.0-rc.2**. The release archive carries a window binary for Windows (x64), macOS
-(Apple silicon and Intel) and Linux (x64), so one download installs the whole plugin on any of them and
+Requires **DSH >= 0.2.0-rc.2**. The published package and the release archive both carry a window binary
+for Windows (x64), macOS (Apple silicon and Intel) and Linux (x64), so one install works on any of them and
 nothing is built locally.
+
+### Install from npm
+
+Ask for the package by name — in the Web sidebar open **Plugins → Add plugin** and enter it, or pass it to
+the plugin manager:
+
+```
+plugin_manager  action: install_bundle  target: dsh-desktop-pet-codex
+```
+
+A version pins with `dsh-desktop-pet-codex@0.1.1`. The package carries the compiled plugin and all four
+window binaries, so installing it runs no install scripts, needs no build step, and downloads nothing at
+start-up.
+
+Once the plugin is listed in the community catalog, searching the plugin market for the pet installs it in
+one click as well.
 
 ### Install the release archive
 
-Point the plugin manager at this asset URL:
+Point the plugin manager at this asset URL — use this to pin a version, or when npm is unreachable:
 
 ```
 plugin_manager  action: install_bundle
