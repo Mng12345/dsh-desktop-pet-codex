@@ -1,13 +1,16 @@
 # Build the release tarball that the plugin market installs.
 #
 # The market prefers, in order: a registry package, a prebuilt GitHub Release
-# archive, and only then the repository source. This workflow produces both of
-# the first two — it publishes the plugin to npm with the window binary for
-# every platform inside the tarball, and attaches the same tree to the GitHub
-# Release as a `.tgz` for anyone pinning a version. Building the window needs
-# Rust and several minutes, and the market deliberately refuses to run install
-# scripts, so the binaries are staged into `plugin/bin/<platform>-<arch>/`
-# before either artifact is produced.
+# archive, and only then the repository source. This workflow produces the
+# second: the window binary for every platform is packed into one `.tgz` and
+# attached to the GitHub Release, and the market reads the version-independent
+# copy of it. Building the window needs Rust and several minutes, and the market
+# deliberately refuses to run install scripts, so the binaries are staged into
+# `plugin/bin/<platform>-<arch>/` before the archive is produced.
+#
+# Publishing to npm is a separate, manual step. The account requires a one-time
+# password, so a maintainer runs `npm publish` from an interactive window (see
+# docs/release.md), and the workflow never fails on a credential it cannot have.
 #
 # One archive serves Windows, macOS and Linux: the plugin picks the binary that
 # matches the machine it runs on, so a single download is complete everywhere.
@@ -31,9 +34,6 @@ on:
 
 permissions:
   contents: write
-  # Trusted publishing: the publish step exchanges this job's OIDC token for a
-  # short-lived npm credential, so the repository stores no npm token.
-  id-token: write
 
 jobs:
   build:
@@ -226,30 +226,6 @@ jobs:
             exit 1
           fi
           echo "releasing dsh-desktop-pet-codex@${version}"
-
-      # Trusted publishing is newer than the npm the runner image ships with.
-      # The npm docs use exactly this step, so it runs as the runner user.
-      - name: Upgrade npm for trusted publishing
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          npm install --global npm@latest
-          npm --version
-
-      # Trusted publishing exchanges the job's OIDC token for a short-lived
-      # credential, so no npm token lives in the repository. The existence check
-      # makes a re-run of an already published tag a no-op instead of a failure.
-      - name: Publish to npm
-        if: startsWith(github.ref, 'refs/tags/v')
-        working-directory: plugin
-        shell: bash
-        run: |
-          set -euo pipefail
-          version="$(node -p "require('./package.json').version")"
-          if npm view "dsh-desktop-pet-codex@${version}" version >/dev/null 2>&1; then
-            echo "dsh-desktop-pet-codex@${version} is already on npm; skipping publish."
-            exit 0
-          fi
-          npm publish --provenance --access public
 
       - uses: actions/upload-artifact@v4
         with:
