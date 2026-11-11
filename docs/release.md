@@ -12,7 +12,7 @@ npm Trusted Publisher（已明确放弃，见文末）。
 | --- | --- |
 | `plugin/package.json` | `version` |
 | `plugin/package-lock.json` | 顶层 `version` 与 `packages[""].version` |
-| `README.md` / `README.zh.md` | 安装示例里的 `dsh-desktop-pet-codex@x.y.z` |
+| `README.md`、`README.zh.md`、`README.ja.md`、`README.zh-tw.md`、`README.de.md` | 安装示例里的 `dsh-desktop-pet-codex@x.y.z` |
 
 版本号遵循 semver：0.x 阶段 patch 修 bug，minor 用于兼容性变化。**已发布的版本号不可复用**。
 

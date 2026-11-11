@@ -1,6 +1,6 @@
 # dsh-desktop-pet-codex
 
-[English](README.md)
+[English](README.md) | 中文 | [日本語](README.ja.md) | [繁體中文](README.zh-tw.md) | [Deutsch](README.de.md)
 
 给 DeepSeek Harness 用的桌面宠物：一个常驻置顶的小角色，加一块只显示你在意的会话在做什么的状态面板。
 项目分两半，共用一层约定——读取 Harness 的 DSH 宿主插件，和负责把状态画出来的 Tauri 窗口。
@@ -271,6 +271,12 @@ tools/                  pack-release.mjs 构建与打包；gen-pet-frames.mjs �
                         gen-readme-gifs.mjs 把帧表重放成 docs/states/ 里的 GIF
 docs/                   状态动图、会话列表示例图、设置窗口截图
 ```
+
+## GIF 工具
+
+需要把录屏做成 GIF，或把已经太大的 GIF 压小？同一作者的在线 GIF 站点 GIF Master 提供
+[Video to GIF](https://gif-master.com/zh/tools/video-to-gif?utm_source=github) 和
+[GIF Compressor](https://gif-master.com/zh/tools/gif-compressor?utm_source=github)。
 
 ## 许可
 

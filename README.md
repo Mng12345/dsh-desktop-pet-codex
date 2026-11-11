@@ -1,6 +1,6 @@
 # dsh-desktop-pet-codex
 
-[中文文档](README.zh.md)
+English | [中文](README.zh.md) | [日本語](README.ja.md) | [繁體中文](README.zh-tw.md) | [Deutsch](README.de.md)
 
 A desktop pet for DeepSeek Harness: a small always-on-top character plus a roster panel that shows
 what the conversations you care about are doing. It is two halves under one contract — a DSH Host
@@ -296,6 +296,12 @@ tools/                  pack-release.mjs builds and packs; gen-pet-frames.mjs dr
                         gen-readme-gifs.mjs replays them into docs/states/ for this README
 docs/                   the state GIFs, the roster sample, and the settings screenshot
 ```
+
+## GIF tools
+
+Need to turn a screen recording into a GIF, or shrink a GIF that is already too large? GIF Master, the
+same author's online GIF site, has a [Video to GIF](https://gif-master.com/en/tools/video-to-gif?utm_source=github)
+converter and a [GIF Compressor](https://gif-master.com/en/tools/gif-compressor?utm_source=github).
 
 ## License
 
