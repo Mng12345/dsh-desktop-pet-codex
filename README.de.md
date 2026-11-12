@@ -135,7 +135,7 @@ und geben Sie ihn ein, oder übergeben Sie ihn dem Plugin-Manager:
 plugin_manager  action: install_bundle  target: dsh-desktop-pet-codex
 ```
 
-Eine Version pinnt man mit `dsh-desktop-pet-codex@0.1.1`. Das Paket enthält das kompilierte Plugin und
+Eine Version pinnt man mit `dsh-desktop-pet-codex@0.1.2`. Das Paket enthält das kompilierte Plugin und
 alle vier Fenster-Binaries, daher führt die Installation keine Install-Skripte aus, braucht keinen
 Build-Schritt und lädt beim Start nichts herunter.
 

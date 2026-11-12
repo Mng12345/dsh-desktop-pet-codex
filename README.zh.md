@@ -117,7 +117,7 @@ DSH 页面自己用的四条路由——`/desktop-pet/focus`、`/desktop-pet/foc
 plugin_manager  action: install_bundle  target: dsh-desktop-pet-codex
 ```
 
-要固定版本就写 `dsh-desktop-pet-codex@0.1.1`。包里已经有编译好的插件和四平台窗口二进制，所以安装时不
+要固定版本就写 `dsh-desktop-pet-codex@0.1.2`。包里已经有编译好的插件和四平台窗口二进制，所以安装时不
 跑安装脚本、不需要构建，启动时也不联网下载。
 
 等插件进了社区目录之后，在插件市场里搜索桌宠也能一键安装。

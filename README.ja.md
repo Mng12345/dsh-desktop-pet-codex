@@ -128,7 +128,7 @@ Web サイドバーで **プラグイン → Add plugin** を開いてパッケ�
 plugin_manager  action: install_bundle  target: dsh-desktop-pet-codex
 ```
 
-バージョンを固定するには `dsh-desktop-pet-codex@0.1.1` と書きます。パッケージにはコンパイル済みの
+バージョンを固定するには `dsh-desktop-pet-codex@0.1.2` と書きます。パッケージにはコンパイル済みの
 プラグインと四つのウィンドウバイナリが入っているため、インストール時にスクリプトは走らず、ビルドも
 不要で、起動時にダウンロードも行いません。
 

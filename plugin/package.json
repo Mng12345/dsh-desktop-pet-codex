@@ -1,6 +1,6 @@
 {
   "name": "dsh-desktop-pet-codex",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "A desktop pet window that shows how many Harness sessions exist and what each one is doing.",
   "license": "MIT",

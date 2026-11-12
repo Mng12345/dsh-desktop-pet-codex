@@ -1,0 +1,29 @@
+# Fail the build when a root README edit did not reach plugin/README*.md.
+#
+# The plugin market renders the README of the entry URL, and this repository is
+# listed at plugin/ — so the page shows plugin/README.md, not the project README
+# at the root. npm renders the same file. Those five copies are generated from
+# the root READMEs by tools/sync-plugin-readmes.mjs, and a root README edit that
+# is committed without regenerating them leaves both pages stale until someone
+# notices. This check regenerates in memory and fails on any difference, so the
+# drift is caught at push time instead of at the next nightly market build.
+name: check-plugin-readmes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: plugin/README copies match the root READMEs
+        run: node tools/sync-plugin-readmes.mjs --check

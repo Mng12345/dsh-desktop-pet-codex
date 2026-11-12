@@ -14,6 +14,10 @@ npm Trusted Publisher（已明确放弃，见文末）。
 | `plugin/package-lock.json` | 顶层 `version` 与 `packages[""].version` |
 | `README.md`、`README.zh.md`、`README.ja.md`、`README.zh-tw.md`、`README.de.md` | 安装示例里的 `dsh-desktop-pet-codex@x.y.z` |
 
+`plugin/README*.md` 不是手写文件：`node tools/sync-plugin-readmes.mjs` 从上面五份根 README 生成
+（图片改成绝对 raw 链接、HTML 画廊改成 markdown 图片行），`check-plugin-readmes` 工作流校验两边
+同步。改完根 README 要重跑脚本，否则 CI 直接失败。
+
 版本号遵循 semver：0.x 阶段 patch 修 bug，minor 用于兼容性变化。**已发布的版本号不可复用**。
 
 ## 2. 提交并打 tag

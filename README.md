@@ -131,7 +131,7 @@ the plugin manager:
 plugin_manager  action: install_bundle  target: dsh-desktop-pet-codex
 ```
 
-A version pins with `dsh-desktop-pet-codex@0.1.1`. The package carries the compiled plugin and all four
+A version pins with `dsh-desktop-pet-codex@0.1.2`. The package carries the compiled plugin and all four
 window binaries, so installing it runs no install scripts, needs no build step, and downloads nothing at
 start-up.
 
