@@ -14,6 +14,14 @@ Tauri application that reads that bridge and draws the pet plus a status panel.
 - Each row's result when a turn ends, so you can see what finished without
   opening DSH.
 
+## Screenshots
+
+![Roster screenshot — the watched conversations with their live state](https://raw.githubusercontent.com/Mng12345/dsh-desktop-pet-codex/main/docs/roster.png)
+
+![Settings screenshot — the pet's own settings window](https://raw.githubusercontent.com/Mng12345/dsh-desktop-pet-codex/main/docs/settings.png)
+
+![Screenshot of the pet character](https://raw.githubusercontent.com/Mng12345/dsh-desktop-pet-codex/main/pet-app/public/pet.png)
+
 ## Requirements
 
 - DeepSeek Harness `>= 0.2.0-rc.2`, Node `>= 22`.
