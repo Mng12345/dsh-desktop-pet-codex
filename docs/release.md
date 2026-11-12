@@ -59,6 +59,9 @@ Start-Process powershell -ArgumentList '-NoExit','-Command',"cd '$PWD\plugin'; n
 
 用户在窗口中输入 OTP，看到 `+ dsh-desktop-pet-codex@<version>` 即成功。
 
+窗口里先跑一次 `npm whoami`：报 `E401 Unauthorized` 说明本地 token 已过期——此时 publish 会直接失败、
+registry 版本不变，先在同一窗口 `npm login --registry=https://registry.npmjs.org` 完成浏览器授权再 publish。
+
 注意：
 
 - 命令必须在 `plugin/` 目录执行（manifest、`bin/`、`cordis.patch.yml` 都在那里）。
