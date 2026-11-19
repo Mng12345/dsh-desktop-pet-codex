@@ -2,6 +2,8 @@
 
 [English](README.md) | [中文](README.zh.md) | 日本語 | [繁體中文](README.zh-tw.md) | [Deutsch](README.de.md)
 
+ドキュメント：[GitBook](https://ming-9.gitbook.io/dsh-desktop-pet-codex/)
+
 DeepSeek Harness 用のデスクトップペットです。常に最前面に表示され、気にかけている会話が今どうしているかを
 示す roster パネルを添えます。ひとつの契約の下にある二つの半分——Harness を読む DSH ホスト側プラグインと、
 それを描く Tauri ウィンドウ——でできています。

@@ -2,6 +2,8 @@
 
 [English](README.md) | 中文 | [日本語](README.ja.md) | [繁體中文](README.zh-tw.md) | [Deutsch](README.de.md)
 
+文档：[GitBook](https://ming-9.gitbook.io/dsh-desktop-pet-codex/)
+
 给 DeepSeek Harness 用的桌面宠物：一个常驻置顶的小角色，加一块只显示你在意的会话在做什么的状态面板。
 项目分两半，共用一层约定——读取 Harness 的 DSH 宿主插件，和负责把状态画出来的 Tauri 窗口。
 

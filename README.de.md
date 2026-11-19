@@ -2,6 +2,8 @@
 
 [English](README.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [繁體中文](README.zh-tw.md) | Deutsch
 
+Dokumentation: [GitBook](https://ming-9.gitbook.io/dsh-desktop-pet-codex/)
+
 Ein Desktop-Pet für DeepSeek Harness: eine kleine, immer im Vordergrund stehende Figur und ein Roster-Panel, das zeigt, was die Unterhaltungen machen, die Ihnen wichtig sind. Es besteht aus zwei Hälften
 unter einem Vertrag – einem DSH-Host-Plugin, das Harness liest, und einem Tauri-Fenster, das es zeichnet.
 

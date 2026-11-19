@@ -2,6 +2,8 @@
 
 English | [中文](README.zh.md) | [日本語](README.ja.md) | [繁體中文](README.zh-tw.md) | [Deutsch](README.de.md)
 
+Documentation: [GitBook](https://ming-9.gitbook.io/dsh-desktop-pet-codex/)
+
 A desktop pet for DeepSeek Harness: a small always-on-top character plus a roster panel that shows
 what the conversations you care about are doing. It is two halves under one contract — a DSH Host
 plugin that reads the Harness, and a Tauri window that draws it.
