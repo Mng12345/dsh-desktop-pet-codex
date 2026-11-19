@@ -1,0 +1,12 @@
+$schema: https://api.gitbook.com/gitbook-docs.yaml
+site:
+  title: dsh-desktop-pet-codex
+  structure:
+    - type: space
+      key: space-dsh-desktop-pet-codex
+      title: dsh-desktop-pet-codex
+      path: dsh-desktop-pet-codex
+      default: true
+      content:
+        directory: ./
+        language: en
