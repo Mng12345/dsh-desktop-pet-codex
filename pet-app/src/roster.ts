@@ -17,14 +17,18 @@ import { connect, requestFocus, requestReview, sendWatch, type BridgeStatus } fr
 import { installContextMenu } from './context-menu.js'
 import {
   canDismiss,
+  clockMs,
   displayName,
   dominantPhase,
+  elapsedTier,
+  formatElapsed,
   groupCounts,
   groupName,
   groupPhase,
   headline as headlineOf,
   headlineWord,
   rowDetail,
+  stepClock,
   subtitleOf,
   type Headline,
   type PetSettings,
@@ -32,6 +36,7 @@ import {
   type SessionGroup,
   type SessionNode,
   type SessionView,
+  type TurnClock,
 } from './state.js'
 import {
   endpoint,
@@ -303,6 +308,66 @@ const headlineNodes = (top: Headline): readonly Node[] => {
   return nodes
 }
 
+// --- the turn's stopwatch ---------------------------------------------------
+
+/**
+ * This window's clocks, by session.
+ *
+ * The state machine that advances them is pure and lives in `state.js`; what is
+ * genuinely this window's is only the map, and the fact that it dies with the
+ * process: after a restart the prompt watermark is the only seed there is.
+ */
+const clocks = new Map<string, TurnClock>()
+
+/**
+ * Advance one session's clock on a snapshot.
+ *
+ * @param session - the row this paint is about.
+ * @param now - this window's clock.
+ */
+const paceClock = (session: SessionView, now: number): void => {
+  clocks.set(session.id, stepClock(clocks.get(session.id), session, now))
+}
+
+/** Walk a group tree, pacing every row and recording which ids are still here. */
+const paceTree = (nodes: readonly SessionNode[], now: number, seen: Set<string>): void => {
+  for (const node of nodes) {
+    paceClock(node.session, now)
+    seen.add(node.session.id)
+    paceTree(node.children, now, seen)
+  }
+}
+
+/**
+ * Write every visible row's stopwatch, creating or dropping the label as needed.
+ *
+ * Only the label is touched, so a once-a-second repaint cannot disturb the row's
+ * name, its hover state, or a fold in progress.
+ *
+ * @param now - this window's clock.
+ */
+const paintClocks = (now: number): void => {
+  for (const row of sessions.querySelectorAll<HTMLElement>('[data-focus]')) {
+    const tool = row.querySelector<HTMLElement>('.tool')
+    const id = row.dataset['focus']
+    if (tool === null || id === undefined) continue
+    const clock = clocks.get(id)
+    const elapsed = clock === undefined ? null : clockMs(clock, now)
+    const existing = tool.querySelector<HTMLElement>('.elapsed')
+    if (elapsed === null) {
+      existing?.remove()
+      continue
+    }
+    const label = existing ?? document.createElement('span')
+    if (existing === null) {
+      label.className = 'elapsed'
+      tool.append(label)
+    }
+    label.textContent = ` · ${formatElapsed(elapsed)}`
+    label.dataset['tier'] = elapsedTier(elapsed)
+  }
+}
+
 /** Paint one snapshot. */
 const render = (snapshot: PetSnapshot): void => {
   const top = headlineOf(snapshot)
@@ -315,7 +380,14 @@ const render = (snapshot: PetSnapshot): void => {
   headline.replaceChildren(...headlineNodes(top))
   subtitle.textContent = subtitleOf(snapshot)
   subtitle.title = subtitle.textContent
+  const now = Date.now()
+  const seen = new Set<string>()
+  paceTree(snapshot.groups.flatMap((group) => group.nodes), now, seen)
+  // A session that left the watched set takes its clock with it; keeping it
+  // would resurrect a stale reading if the same id came back.
+  for (const id of clocks.keys()) if (!seen.has(id)) clocks.delete(id)
   sessions.replaceChildren(...snapshot.groups.map(toGroup))
+  paintClocks(now)
   // The Host is the authority on the set once it has one, so its answer is what
   // gets remembered — including the seed it added on a first run, which this
   // window could not have known about. `null` means it has not been told yet,
@@ -323,6 +395,10 @@ const render = (snapshot: PetSnapshot): void => {
   if (snapshot.watch !== null) writeWatch(snapshot.watch)
   syncFrame()
 }
+
+// A stopwatch has to tick without a snapshot: the Host only speaks when
+// something changes, and "still working" is not a change.
+window.setInterval(() => { paintClocks(Date.now()) }, 1000)
 
 /** Paint the connection state, leaving the last roster visible while it retries. */
 const applyStatus = (status: BridgeStatus): void => {

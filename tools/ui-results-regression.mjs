@@ -73,6 +73,36 @@ for (const [index, phase] of phases.entries()) {
     assert.equal(model.subtitleOf(decoded).includes(labels[index]), true)
   }
 }
+// The turn's stopwatch is a pure format: seconds, then minutes, then hours, and
+// a value that is not a number still reads as one.
+assert.equal(model.formatElapsed(-5_000), '0s')
+assert.equal(model.formatElapsed(Number.NaN), '0s')
+assert.equal(model.formatElapsed(45_400), '45s')
+assert.equal(model.formatElapsed(59_999), '59s')
+assert.equal(model.formatElapsed(60_000), '1m 00s')
+assert.equal(model.formatElapsed(83_500), '1m 23s')
+assert.equal(model.formatElapsed(3_599_000), '59m 59s')
+assert.equal(model.formatElapsed(3_900_000), '1h 05m')
+assert.equal(model.elapsedTier(119_999), 'calm')
+assert.equal(model.elapsedTier(120_000), 'warm')
+assert.equal(model.elapsedTier(299_999), 'warm')
+assert.equal(model.elapsedTier(300_000), 'hot')
+// The stopwatch itself: seeded from the prompt watermark, stopped by a question,
+// resumed by the answer, frozen when the turn ends.
+let clock = model.stepClock(undefined, session('running', 'live', { updatedAt: 95_000 }), 100_000)
+assert.equal(model.clockMs(clock, 100_000), 5_000, 'a first sight seeds from the prompt')
+assert.equal(model.clockMs(clock, 115_000), 20_000)
+clock = model.stepClock(clock, session('waiting', 'live', { updatedAt: 95_000 }), 120_000)
+assert.equal(model.clockMs(clock, 180_000), 25_000, 'a question stops the clock')
+clock = model.stepClock(clock, session('running', 'live', { updatedAt: 95_000 }), 180_000)
+assert.equal(model.clockMs(clock, 185_000), 30_000, 'the answer resumes it')
+clock = model.stepClock(clock, session('completed', 'live', { updatedAt: 95_000 }), 190_000)
+assert.equal(model.clockMs(clock, 1_000_000), 35_000, 'an ended turn keeps what it worked')
+// A row this window only ever saw settled has no start, so it has no reading.
+assert.equal(model.clockMs(model.stepClock(undefined, session('stopped', 'gone'), 100_000), 200_000), null)
+// A new turn does not inherit the previous turn's hour: a watermark older than
+// the last end is not a start.
+assert.equal(model.clockMs(model.stepClock(clock, session('running', 'live', { updatedAt: 95_000 }), 300_000), 300_000), 0)
 const mixed = snapshot(phases.map((phase) => node(session(phase))))
 equals(model.headline(mixed), { kind: 'waiting', count: 1 })
 assert.equal(model.activeCount(mixed), 2)
@@ -277,4 +307,18 @@ equals(savedWatch(), ['stopped'])
 stream.emit('snapshot', snapshot([]))
 equals(savedWatch(), [])
 assert.equal(elements.get('headline').textContent, '全部空闲')
-console.log('PASS UI DOM: terminal labels and buttons, no child removal, rejected/accepted request waits, focus waits and its three hint states, watch attach/null/mirroring')
+// The stopwatch rides on the row's own status text: seeded from the prompt
+// watermark, frozen when the turn settles, and never invented for a row this
+// window only ever saw settled.
+const promptAt = Date.now() - 130_000
+stream.emit('snapshot', snapshot([node(session('running', 'live', { updatedAt: promptAt }))]))
+const liveRow = roster.querySelector('[data-focus="live"]')
+const liveLabel = liveRow.querySelector('.elapsed')
+assert.equal(liveLabel.dataset.tier, 'warm', 'past two minutes the label says so')
+assert.match(liveLabel.textContent, /^ · 2m \d\ds$/u)
+assert.match(liveRow.querySelector('.tool').textContent, /^old-tool · 2m \d\ds$/u)
+stream.emit('snapshot', snapshot([node(session('completed', 'live', { updatedAt: promptAt }))]))
+const settledRow = roster.querySelector('[data-focus="live"]')
+assert.match(settledRow.querySelector('.tool').textContent, /^已完成 · 2m \d\ds$/u)
+assert.equal(settledRow.querySelector('.elapsed').dataset.tier, 'warm', 'a settled row keeps the tier it earned')
+console.log('PASS UI DOM: terminal labels and buttons, no child removal, rejected/accepted request waits, focus waits and its three hint states, watch attach/null/mirroring, turn stopwatch seed and freeze')

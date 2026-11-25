@@ -80,7 +80,9 @@ faltet sie, und das Fenster merkt sich die Faltung, nicht die Einstellungen.
 **Eine Zeile ist eine Unterhaltung.** Der Name ist der Titel der Unterhaltung, ersatzweise ihr Verzeichnis
 und dann eine kurze id. Daneben steht das letzte Tool, solange sie läuft (`bash`), `等你`, solange sie
 wartet – eine Zeile, die den Leser braucht, sagt, was sie braucht, nicht, was sie aufgerufen hat – und
-`已完成` oder `已停止`, sobald sie sich beruhigt hat. Eine laufende Zeile kann ihren letzten Gedanken in
+`已完成` oder `已停止`, sobald sie sich beruhigt hat, gefolgt von der Stoppuhr ihres Turns (`2m 10s`):
+gezählt ab dem Prompt, pausiert, solange die Zeile auf den Leser wartet, ab zwei Minuten bernsteinfarben
+und ab fünf Minuten rot. Eine laufende Zeile kann ihren letzten Gedanken in
 einer zweiten Zeile tragen, und ein erhaltenes Ergebnis trägt ein ✓, das diese Unterhaltung vom Pet
 entfernt.
 

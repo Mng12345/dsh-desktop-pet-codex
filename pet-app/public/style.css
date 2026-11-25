@@ -6,6 +6,10 @@
   /* Not a session phase: the quiet look, for an empty roster and for a
      Workspace with nothing live in it. */
   --phase-idle: #94a3b8;
+  /* The turn's stopwatch, past its marks. Amber is the same "look at me" the
+     waiting phase uses; red is the one colour no phase claims. */
+  --elapsed-warm: var(--phase-waiting);
+  --elapsed-hot: #f87171;
   --ink: #e8eef7;
   --ink-dim: #9fb0c4;
   --line: rgba(148, 163, 184, 0.22);
@@ -338,6 +342,17 @@ body[data-list-collapsed="true"] #panel-body { display: none; }
   font-size: calc(10px * var(--font-scale));
   opacity: 0.85;
 }
+
+/* The turn's own stopwatch: tabular digits, so a once-a-second repaint cannot
+   make the row's status text shift, and a colour that only appears once the
+   turn has outlived the glance it was meant to be. */
+#sessions .elapsed {
+  font-variant-numeric: tabular-nums;
+}
+
+#sessions .elapsed[data-tier="warm"] { color: var(--elapsed-warm); }
+
+#sessions .elapsed[data-tier="hot"] { color: var(--elapsed-hot); }
 
 /* Remove a retained result from the pet. Kept quiet until hover or focus. */
 #sessions .dismiss {

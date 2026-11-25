@@ -79,8 +79,10 @@ is remembered by this window rather than by the settings.
 **A row is a conversation.** The name is the conversation's title, falling back to its directory and
 then a short id. Beside it sits the last tool while it runs (`bash`), `等你` while it waits — a row
 that needs the reader says what it needs, not what it called — and `已完成` or `已停止` once it
-settles. A running row can carry its last thought on a second line, and a retained result carries a ✓
-that removes that conversation from the pet.
+settles, followed by the turn's stopwatch (`2m 10s`): counted from the prompt, paused while the row
+waits on the reader, amber past two minutes and red past five. A running row can also carry its last
+thought on a second line, and a retained result carries a ✓ that removes that conversation from the
+pet.
 
 **Subagents are never rows of their own.** They hang indented under the parent that dispatched them,
 and they are not counted: a child working is its parent working.

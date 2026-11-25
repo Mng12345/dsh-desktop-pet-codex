@@ -519,6 +519,145 @@ export const rowDetail = (session: SessionView): string =>
     : phaseLabel(session.phase)
 
 /**
+ * The turn's stopwatch, at the widest unit that still reads as a number.
+ *
+ * Seconds below a minute, then minutes and seconds, then hours and minutes: the
+ * label sits in the row's narrow status column, so it never grows past seven
+ * characters and never repeats a unit it has already beaten. A value that is not
+ * a number reads as zero rather than as `NaNs`.
+ *
+ * @param elapsed - milliseconds of work in the current turn.
+ * @returns a compact label such as `45s`, `1m 23s`, or `1h 05m`.
+ */
+export const formatElapsed = (elapsed: number): string => {
+  const seconds = Number.isFinite(elapsed) ? Math.max(0, Math.floor(elapsed / 1000)) : 0
+  if (seconds < 60) return `${String(seconds)}s`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${String(minutes)}m ${String(seconds % 60).padStart(2, '0')}s`
+  const hours = Math.floor(minutes / 60)
+  return `${String(hours)}h ${String(minutes % 60).padStart(2, '0')}m`
+}
+
+/** The two marks past which a turn is worth a second look. */
+export const ELAPSED_MARKS = { warm: 2 * 60 * 1000, hot: 5 * 60 * 1000 } as const
+
+/** How loud a turn's stopwatch is allowed to be. */
+export type ElapsedTier = 'calm' | 'warm' | 'hot'
+
+/**
+ * Which mark a running turn has passed.
+ *
+ * Two marks rather than one: two minutes is "still working, looked at it", five
+ * is "this one may be stuck". Past the second mark the label stops being a
+ * measurement and becomes a hint.
+ *
+ * @param elapsed - milliseconds of work in the current turn.
+ * @returns the tier the label is painted in.
+ */
+export const elapsedTier = (elapsed: number): ElapsedTier =>
+  elapsed >= ELAPSED_MARKS.hot ? 'hot' : elapsed >= ELAPSED_MARKS.warm ? 'warm' : 'calm'
+
+/**
+ * How long the current turn has been working, per session.
+ *
+ * The Host publishes when the reader last spoke (`updatedAt`), not when work
+ * began, so the window keeps the run itself. A turn that pauses banks what it
+ * worked into `banked` and stops the clock; a turn that ends keeps `final` for
+ * as long as its row stands. Nothing is written to disk: after a restart the
+ * only honest seed is the prompt watermark, and a turn this window never saw
+ * working is not this window's to time.
+ */
+export type TurnClock = {
+  /** The phase this clock was last advanced under. */
+  readonly phase: SessionPhase
+  /** When the current stretch of work began, or `null` while paused or ended. */
+  readonly activeStart: number | null
+  /** Work banked before the current stretch. */
+  readonly banked: number
+  /** What the finished turn took, or `null` when it is still live or unseen. */
+  readonly final: number | null
+  /** When the turn ended, so a stale prompt watermark is not read as a start. */
+  readonly endedAt: number | null
+}
+
+/** A prompt watermark older than this describes a session, not this turn. */
+export const STALE_PROMPT = 12 * 60 * 60 * 1000
+
+/** Whether a phase means the turn is over. */
+export const settledPhase = (phase: SessionPhase): boolean =>
+  phase === 'completed' || phase === 'stopped'
+
+/**
+ * How much of the turn had already run when this window first saw it.
+ *
+ * @param session - the row as published.
+ * @param floor - an instant the watermark must beat to be believed, or 0.
+ * @param now - this window's clock.
+ * @returns banked milliseconds, or 0 when the watermark is missing or stale.
+ */
+const seedOf = (session: SessionView, floor: number, now: number): number => {
+  if (!(session.updatedAt > floor)) return 0
+  const age = now - session.updatedAt
+  return Number.isFinite(age) && age >= 0 && age <= STALE_PROMPT ? age : 0
+}
+
+/**
+ * Fold one snapshot's phase into a session's clock.
+ *
+ * A row that was settled and is working again is a new turn, so its stopwatch
+ * restarts — from the prompt watermark, unless that watermark predates the turn
+ * that just ended, in which case the clock starts now rather than with an hour
+ * already on it.
+ *
+ * @param previous - this session's clock, or `undefined` the first time.
+ * @param session - the row this paint is about.
+ * @param now - this window's clock.
+ * @returns the advanced clock; a frozen one is returned unchanged in meaning.
+ */
+export const stepClock = (
+  previous: TurnClock | undefined,
+  session: SessionView,
+  now: number,
+): TurnClock => {
+  const { phase } = session
+  if (previous === undefined) {
+    // First sight. A settled row carries no start this window can trust, so it
+    // gets no stopwatch at all rather than one invented from the row's birthday.
+    return {
+      phase,
+      activeStart: phase === 'running' ? now : null,
+      banked: settledPhase(phase) ? 0 : seedOf(session, 0, now),
+      final: null,
+      endedAt: null,
+    }
+  }
+  if (phase === previous.phase) return previous
+  const worked = previous.activeStart === null
+    ? previous.banked
+    : previous.banked + (now - previous.activeStart)
+  const restarted = settledPhase(previous.phase) ? seedOf(session, previous.endedAt ?? 0, now) : worked
+  if (phase === 'running') {
+    return { phase, activeStart: now, banked: restarted, final: null, endedAt: null }
+  }
+  if (phase === 'waiting') {
+    // Blocked on the reader: the work so far is banked and the clock stops.
+    return { phase, activeStart: null, banked: restarted, final: null, endedAt: null }
+  }
+  return { phase, activeStart: null, banked: worked, final: worked, endedAt: now }
+}
+
+/**
+ * What one clock reads right now, or `null` when the row has nothing honest.
+ *
+ * @param clock - the session's clock.
+ * @param now - this window's clock.
+ */
+export const clockMs = (clock: TurnClock, now: number): number | null =>
+  clock.activeStart !== null
+    ? clock.banked + (now - clock.activeStart)
+    : clock.phase === 'waiting' ? clock.banked : clock.final
+
+/**
  * Whether the row offers its removal control.
  *
  * The Host's answer, verbatim. It owns the watched set and the facts behind it —
