@@ -588,6 +588,32 @@ export const settledPhase = (phase: SessionPhase): boolean =>
   phase === 'completed' || phase === 'stopped'
 
 /**
+ * Whether anything under this row is blocked on the reader.
+ *
+ * Recursive on purpose: a subagent may spawn its own subagents, and a question
+ * two levels down is just as stuck as one level down. The parent row is the only
+ * place that signal can surface once children are collapsed, because the Host
+ * does not fold a child's `waiting` into its parent's phase.
+ *
+ * @param node - the row and everything under it.
+ * @returns whether any descendant is waiting.
+ */
+export const childWaiting = (node: SessionNode): boolean =>
+  node.children.some((child) => child.session.phase === 'waiting' || childWaiting(child))
+
+/**
+ * The badge a parent row carries for the subagents it spawned.
+ *
+ * Counted from the tree rather than from the Host's `subagentCount`, which only
+ * counts the children that are *running* — a row with four finished subagents
+ * would claim none.
+ *
+ * @param count - how many direct children the row has.
+ * @returns the badge's text.
+ */
+export const childrenLabel = (count: number): string => `${String(count)} 子代理`
+
+/**
  * How much of the turn had already run when this window first saw it.
  *
  * @param session - the row as published.

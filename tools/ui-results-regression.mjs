@@ -87,6 +87,19 @@ assert.equal(model.elapsedTier(119_999), 'calm')
 assert.equal(model.elapsedTier(120_000), 'warm')
 assert.equal(model.elapsedTier(299_999), 'warm')
 assert.equal(model.elapsedTier(300_000), 'hot')
+// Subagents are folded by default, so the parent carries both the count and the
+// one signal a folded child cannot show: its question.
+assert.equal(model.childrenLabel(4), '4 子代理')
+assert.equal(model.childWaiting(node(session('completed'))), false)
+assert.equal(model.childWaiting(node(session('completed'), [node(session('waiting', 'w', { isSubagent: true }))])), true)
+assert.equal(model.childWaiting(node(session('completed'), [node(session('stopped', 's', { isSubagent: true }))])), false)
+assert.equal(
+  model.childWaiting(node(session('completed'), [
+    node(session('stopped', 's', { isSubagent: true }), [node(session('waiting', 'w2', { isSubagent: true }))]),
+  ])),
+  true,
+  'a question two levels down is still a question',
+)
 // The stopwatch itself: seeded from the prompt watermark, stopped by a question,
 // resumed by the answer, frozen when the turn ends.
 let clock = model.stepClock(undefined, session('running', 'live', { updatedAt: 95_000 }), 100_000)
@@ -270,8 +283,22 @@ for (const phase of terminal) {
   assert.equal(row.dataset.dismissible, 'true')
   assert.equal(button.title, '从桌宠移除')
   assert.equal(button.getAttribute('aria-label'), `从桌宠移除 会话 ${phase}`)
-  assert.equal(roster.querySelector(`[data-focus="${phase}-child"]`).querySelector('[data-review]'), null)
+  assert.equal(roster.querySelector(`[data-focus="${phase}-child"]`), null, 'subagents start folded')
+  const badge = row.querySelector('[data-toggle-children]')
+  assert.equal(badge.textContent, '1 子代理 ▾')
+  assert.equal(badge.getAttribute('aria-expanded'), 'false')
 }
+// The badge unfolds one parent's subagents, and remembers that it did.
+roster.dispatch('click', roster.querySelector('[data-focus="completed"]').querySelector('[data-toggle-children]'))
+const unfolded = roster.querySelector('[data-focus="completed-child"]')
+assert.ok(unfolded, 'the badge unfolds the subagent')
+assert.equal(unfolded.dataset.nested, 'true')
+assert.equal(unfolded.querySelector('[data-review]'), null, 'a subagent is never removed on its own')
+assert.equal(roster.querySelector('[data-focus="completed"]').querySelector('[data-toggle-children]').textContent, '1 子代理 ▴')
+equals(JSON.parse(storage.get('desktop-pet:roster-open')), ['completed'])
+roster.dispatch('click', roster.querySelector('[data-focus="completed"]').querySelector('[data-toggle-children]'))
+assert.equal(roster.querySelector('[data-focus="completed-child"]'), null, 'a second click folds it again')
+equals(JSON.parse(storage.get('desktop-pet:roster-open')), [])
 const button = roster.querySelector('[data-review="completed"]')
 const beforeClick = JSON.stringify(savedWatch())
 roster.dispatch('click', button)
@@ -321,4 +348,12 @@ stream.emit('snapshot', snapshot([node(session('completed', 'live', { updatedAt:
 const settledRow = roster.querySelector('[data-focus="live"]')
 assert.match(settledRow.querySelector('.tool').textContent, /^已完成 · 2m \d\ds$/u)
 assert.equal(settledRow.querySelector('.elapsed').dataset.tier, 'warm', 'a settled row keeps the tier it earned')
-console.log('PASS UI DOM: terminal labels and buttons, no child removal, rejected/accepted request waits, focus waits and its three hint states, watch attach/null/mirroring, turn stopwatch seed and freeze')
+// A folded child that is waiting still reaches the parent row: the Host keeps a
+// child's `waiting` to itself, so the badge is the only route out.
+stream.emit('snapshot', snapshot([node(session('completed', 'p'), [node(session('waiting', 'p-child', { isSubagent: true }))])]))
+const parentRow = roster.querySelector('[data-focus="p"]')
+assert.equal(parentRow.dataset.childWaiting, 'true')
+assert.equal(parentRow.querySelector('.child-wait').textContent, '子代理等你')
+assert.equal(parentRow.querySelector('.tool').textContent, '已完成')
+assert.equal(roster.querySelector('[data-focus="p-child"]'), null, 'the waiting child is still folded')
+console.log('PASS UI DOM: terminal labels and buttons, no child removal, rejected/accepted request waits, focus waits and its three hint states, watch attach/null/mirroring, turn stopwatch seed and freeze, folded subagents with badge, remembered unfold, waiting child surfaced')

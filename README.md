@@ -84,8 +84,11 @@ waits on the reader, amber past two minutes and red past five. A running row can
 thought on a second line, and a retained result carries a ✓ that removes that conversation from the
 pet.
 
-**Subagents are never rows of their own.** They hang indented under the parent that dispatched them,
-and they are not counted: a child working is its parent working.
+**Subagents fold into their parent.** A `2 子代理 ▾` badge sits beside the parent's name; clicking it
+unfolds the indented child rows, and the unfold is remembered per conversation. Children are not
+counted: a child working is its parent working. When a child is blocked on the reader, the parent row
+gains a `子代理等你` line and its dot turns the waiting colour — otherwise folding would hide the one
+signal that needs a human.
 
 **A click opens that conversation.** Only the window process can raise DSH and only the plugin's
 browser half can switch sessions, so the two actions do not wait for each other: the window parks the

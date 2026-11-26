@@ -86,8 +86,11 @@ und ab fünf Minuten rot. Eine laufende Zeile kann ihren letzten Gedanken in
 einer zweiten Zeile tragen, und ein erhaltenes Ergebnis trägt ein ✓, das diese Unterhaltung vom Pet
 entfernt.
 
-**Subagents sind nie eigene Zeilen.** Sie hängen eingerückt unter dem Elternteil, der sie entsandt hat,
-und zählen nicht mit: ein arbeitendes Kind ist ein arbeitender Elternteil.
+**Subagents sind in ihre Elternzeile gefaltet.** Neben dem Namen des Elternteils steht ein Abzeichen
+`N 子代理 ▾`; ein Klick klappt die eingerückten Kindzeilen auf, und der Zustand wird je Unterhaltung
+gemerkt. Kinder zählen nicht mit: ein arbeitendes Kind ist ein arbeitender Elternteil. Wartet ein Kind
+auf den Leser, bekommt die Elternzeile eine Zeile `子代理等你` und ihr Punkt die Wartefarbe — sonst
+würde das Falten genau das Signal verstecken, das einen Menschen braucht.
 
 **Ein Klick öffnet diese Unterhaltung.** Nur der Fensterprozess kann DSH nach vorn holen, und nur die
 Browser-Hälfte des Plugins kann Sitzungen wechseln, also warten die beiden Aktionen nicht aufeinander:

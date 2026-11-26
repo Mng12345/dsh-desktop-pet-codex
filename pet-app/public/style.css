@@ -286,16 +286,16 @@ body[data-list-collapsed="true"] #panel-body { display: none; }
    as one parent with its children rather than as a flat list of strangers. */
 #sessions li[data-nested="true"] { margin-left: calc(10px * var(--font-scale)); }
 
+/* The dot and the name are the only fixed tracks: everything else — the
+   subagent badge, the status, the removal control — takes a column as wide as
+   itself, so a row only pays for the controls it actually has. */
 #sessions .row-head {
   display: grid;
-  grid-template-columns: 7px minmax(0, 1fr) auto;
+  grid-template-columns: 7px minmax(0, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
   align-items: center;
   column-gap: 6px;
-}
-
-#sessions li[data-dismissible="true"] .row-head {
-  grid-template-columns: 7px minmax(0, 1fr) auto calc(22px * var(--font-scale));
-  column-gap: 8px;
 }
 
 /* The live answer, one line deep: the pet is an ambient indicator, so the
@@ -328,6 +328,10 @@ body[data-list-collapsed="true"] #panel-body { display: none; }
 #sessions li[data-phase="completed"] { --accent: var(--phase-completed); }
 #sessions li[data-phase="stopped"] { --accent: var(--phase-stopped); }
 
+/* A subagent's question belongs to the row that folded it away, so the dot
+   takes the waiting colour even though the parent itself is settled. */
+#sessions li[data-child-waiting="true"] .dot { background: var(--phase-waiting); }
+
 /* The row grid gives result text and its control independent columns. */
 
 #sessions .name {
@@ -341,6 +345,33 @@ body[data-list-collapsed="true"] #panel-body { display: none; }
   color: var(--accent, var(--ink-dim));
   font-size: calc(10px * var(--font-scale));
   opacity: 0.85;
+}
+
+/* How many subagents a row left behind, and the control that unfolds them. */
+#sessions .children {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: calc(10px * var(--font-scale));
+  line-height: 1;
+  opacity: 0.75;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#sessions .children:hover { color: var(--ink); opacity: 1; }
+
+/* A child's question, surfaced on the row that folded it away. Its own line, so
+   the name keeps the width the head needs for the badge and the status. */
+#sessions .child-wait {
+  padding-left: calc(13px * var(--font-scale));
+  font-size: calc(10px * var(--font-scale));
+  line-height: 1.35;
+  color: var(--phase-waiting);
 }
 
 /* The turn's own stopwatch: tabular digits, so a once-a-second repaint cannot

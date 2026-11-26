@@ -17,6 +17,8 @@ import { connect, requestFocus, requestReview, sendWatch, type BridgeStatus } fr
 import { installContextMenu } from './context-menu.js'
 import {
   canDismiss,
+  childWaiting,
+  childrenLabel,
   clockMs,
   displayName,
   dominantPhase,
@@ -70,6 +72,15 @@ const FOLD_KEY = 'desktop-pet:roster-folded'
 
 /** Where the collapsed groups are remembered, by group id. */
 const GROUPS_KEY = 'desktop-pet:roster-groups'
+
+/**
+ * Where the rows whose subagents are unfolded are remembered, by session id.
+ *
+ * A set of *open* parents rather than collapsed ones, so a conversation the pet
+ * has never seen starts folded: children are noise by default, and only an
+ * explicit unfold is remembered.
+ */
+const OPEN_KEY = 'desktop-pet:roster-open'
 
 /**
  * Where the watched set lives.
@@ -152,6 +163,29 @@ const rememberGroups = (): void => {
 }
 
 /**
+ * Which parents the reader has unfolded, so their subagents show.
+ *
+ * Folded is the default for children and open is the default for groups, which
+ * is the whole difference between the two: a Workspace is a place to look, a
+ * subagent is an explanation of one row.
+ */
+let openParents = new Set<string>()
+try {
+  const stored = JSON.parse(window.localStorage.getItem(OPEN_KEY) ?? '[]')
+  if (Array.isArray(stored)) openParents = new Set(stored.filter((id) => typeof id === 'string'))
+} catch {
+  // Storage can be refused; folded is the default anyway.
+}
+
+const rememberOpen = (): void => {
+  try {
+    window.localStorage.setItem(OPEN_KEY, JSON.stringify([...openParents]))
+  } catch {
+    // Remembering is best-effort.
+  }
+}
+
+/**
  * Build one session row.
  *
  * The head is the row's name — the conversation's title, falling back to its
@@ -162,7 +196,8 @@ const rememberGroups = (): void => {
  * `data-focus` is both the click target and the drag opt-out: a row that starts
  * a window drag could never be clicked.
  */
-const toRow = (session: SessionView, nested: boolean): HTMLLIElement => {
+const toRow = (node: SessionNode, nested: boolean): HTMLLIElement => {
+  const session = node.session
   const row = document.createElement('li')
   row.dataset['phase'] = session.phase
   row.dataset['focus'] = session.id
@@ -186,8 +221,38 @@ const toRow = (session: SessionView, nested: boolean): HTMLLIElement => {
   detail.className = 'tool'
   detail.textContent = rowDetail(session)
 
-  head.append(dot, name, detail)
+  head.append(dot, name)
+
+  const count = node.children.length
+  // A row blocked on the reader itself already says so; the badge would only
+  // repeat it. Below that, the badge is the one place a child's question can
+  // surface, because the Host keeps a child's `waiting` to itself.
+  const waiting = session.phase !== 'waiting' && childWaiting(node)
+  if (count > 0) {
+    const open = openParents.has(session.id)
+    if (waiting) row.dataset['childWaiting'] = 'true'
+    const badge = document.createElement('button')
+    badge.type = 'button'
+    badge.className = 'children'
+    badge.dataset['toggleChildren'] = session.id
+    badge.setAttribute('aria-expanded', open ? 'true' : 'false')
+    badge.title = open ? '收起子代理' : `展开 ${String(count)} 个子代理`
+    badge.textContent = `${childrenLabel(count)} ${open ? '▴' : '▾'}`
+    head.append(badge)
+  }
+
+  head.append(detail)
   row.append(head)
+
+  if (waiting) {
+    // Its own line rather than a suffix on the status: with a badge, a status and
+    // a stopwatch already on the head, one more phrase squeezed the name to a
+    // few characters.
+    const note = document.createElement('div')
+    note.className = 'child-wait'
+    note.textContent = '子代理等你'
+    row.append(note)
+  }
 
   if (session.thought !== null) {
     row.dataset['thought'] = session.thoughtKind ?? 'text'
@@ -215,14 +280,24 @@ const toRow = (session: SessionView, nested: boolean): HTMLLIElement => {
   return row
 }
 
-/** Build one node and its subagents, depth first. */
-const toNode = (node: SessionNode): HTMLLIElement[] => [
-  toRow(node.session, false),
-  ...node.children.flatMap((child) => toNode(child).map((element) => {
-    element.dataset['nested'] = 'true'
-    return element
-  })),
-]
+/**
+ * Build one node and, when the reader unfolded it, its subagents — depth first.
+ *
+ * Folded is the default: a delegation leaves one row per subagent behind, and a
+ * finished subagent never leaves on its own, so an unfolded tree is mostly
+ * history. The badge on the parent is what says the history is there.
+ */
+const toNode = (node: SessionNode): HTMLLIElement[] => {
+  const rows = [toRow(node, false)]
+  if (!openParents.has(node.session.id)) return rows
+  for (const child of node.children) {
+    for (const element of toNode(child)) {
+      element.dataset['nested'] = 'true'
+      rows.push(element)
+    }
+  }
+  return rows
+}
 
 /**
  * Build one group: a header the reader can fold, and its rows.
@@ -368,8 +443,12 @@ const paintClocks = (now: number): void => {
   }
 }
 
+/** The last snapshot painted, so a fold can redraw without waiting for the Host. */
+let latest: PetSnapshot | null = null
+
 /** Paint one snapshot. */
 const render = (snapshot: PetSnapshot): void => {
+  latest = snapshot
   const top = headlineOf(snapshot)
   applySettings(snapshot.settings)
   const phase = dominantPhase(snapshot)
@@ -617,6 +696,17 @@ const openSession = (sessionId: string): void => {
 
 sessions.addEventListener('click', (event) => {
   if (!(event.target instanceof Element)) return
+  // Unfolding is a click on the badge, not on the row: the row's own click opens
+  // the conversation, and the badge sits inside it.
+  const toggle = event.target.closest('[data-toggle-children]')
+  const toggleId = toggle?.getAttribute('data-toggle-children')
+  if (typeof toggleId === 'string' && toggleId !== '') {
+    if (openParents.has(toggleId)) openParents.delete(toggleId)
+    else openParents.add(toggleId)
+    rememberOpen()
+    if (latest !== null) render(latest)
+    return
+  }
   const dismiss = event.target.closest('[data-review]')
   const dismissId = dismiss?.getAttribute('data-review')
   if (typeof dismissId === 'string' && dismissId !== '') {
